@@ -1,0 +1,1 @@
+{"entity":"SalesQuotationLines","company":"usmf","fields":["SalesQuotationNumber","LineCreationSequenceNumber","ItemNumber","RequestedSalesQuantity","SalesPrice","LineAmount"],"rows":[["000007",1,"D0011",50,999,49950],["000007",2,"M0053",2,0,0]]}
