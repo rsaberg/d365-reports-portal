@@ -36,10 +36,27 @@ export async function readAll(entitySet: string, opts: { company: string; select
 export async function readCompanies(entitySet = "LegalEntities") {
   const c = await requireConfig();
   const base = c.envUrl.replace(/\/$/, "");
-  const res = await fetch(`${base}/data/${entitySet}?$select=LegalEntityId,Name,AccountingCurrency`, {
-    headers: { Authorization: `Bearer ${await d365Token(c)}`, Accept: "application/json" },
-  });
-  if (!res.ok) throw new Error(`${entitySet} failed ${res.status}`);
-  const j = (await res.json()) as { value: { LegalEntityId: string; Name: string; AccountingCurrency?: string }[] };
-  return j.value.map((v) => ({ company: v.LegalEntityId.toLowerCase(), name: v.Name, currency: v.AccountingCurrency ?? null }));
+  // Read without $select so any company entity works (LegalEntities, Companies, a custom one); fall back to LegalEntities.
+  const read = async (set: string) => {
+    const res = await fetch(`${base}/data/${set}?$top=500`, { headers: { Authorization: `Bearer ${await d365Token(c)}`, Accept: "application/json" } });
+    if (!res.ok) throw new Error(`${set} failed ${res.status}`);
+    const j = (await res.json()) as { value: Record<string, unknown>[] };
+    const s = (v: unknown) => (v == null || v === "" ? "" : String(v));
+    const rows = j.value
+      .map((v) => ({
+        company: s(v.LegalEntityId ?? v.DataArea ?? v.DataAreaId ?? v.dataAreaId ?? v.CompanyId ?? v.Id).toLowerCase(),
+        name: s(v.Name ?? v.CompanyName ?? v.LegalEntityName) || null,
+        currency: s(v.AccountingCurrency ?? v.CurrencyCode ?? v.Currency) || null,
+      }))
+      .filter((r) => /^[a-z0-9]{1,8}$/.test(r.company));
+    if (!rows.length) throw new Error(`${set} returned no companies`);
+    const seen = new Set<string>();
+    return rows.filter((r) => (seen.has(r.company) ? false : (seen.add(r.company), true)));
+  };
+  try {
+    return await read(entitySet);
+  } catch (e) {
+    if (entitySet === "LegalEntities") throw e;
+    return read("LegalEntities");
+  }
 }
