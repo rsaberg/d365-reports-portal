@@ -9,13 +9,18 @@ import { EntityDef, convert } from "./entities";
 export async function replaceRows(def: EntityDef, company: string, records: Record<string, unknown>[], fromDate?: string) {
   const fields = Object.entries(def.map);
   const cols = fields.map(([, m]) => m[0]);
-  const rows = records.map((r) => {
+  let rows = records.map((r) => {
     const row: Record<string, any> = {};
     for (const [field, [col, type, en]] of fields) row[col] = convert(r[field], type, en);
     if (!def.global) row.company = company;
     return row;
   });
   const allCols = def.global ? cols : ["company", ...cols];
+  if (def.global) {
+    // A global entity read across companies can repeat the same record (e.g. one worker per legal entity): keep one per key.
+    const seen = new Set<unknown>();
+    rows = rows.filter((r) => r[cols[0]] != null && !seen.has(r[cols[0]]) && (seen.add(r[cols[0]]), true));
+  }
 
   await sql.begin(async (tx) => {
     if (def.global) {
