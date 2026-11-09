@@ -128,3 +128,12 @@ left join (select distinct on (company, invoice) company, invoice, customer, res
            from d365.invoice_headers order by company, invoice, id) h using (company, invoice)
 left join d365.customers c on c.company = l.company and c.account = h.customer
 left join d365.workers w on w.personnel_number = h.responsible;
+
+-- Supabase: keep the portal schemas away from the public API roles (the app connects as the database owner).
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on schema d365, portal from anon, authenticated;
+    revoke all on all tables in schema d365, portal from anon, authenticated;
+  end if;
+end $$;
