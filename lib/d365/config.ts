@@ -116,3 +116,9 @@ export async function logCall(user: string, action: string, detail: Record<strin
     /* logging must never break a call */
   }
 }
+
+/** Company the reports open on: the company set in D365 integration, else DEFAULT_COMPANY. */
+export async function defaultCompany(): Promise<string> {
+  const saved = await getSetting<D365Config>("d365").catch(() => null);
+  return (saved?.company || process.env.DEFAULT_COMPANY || "").toLowerCase();
+}
