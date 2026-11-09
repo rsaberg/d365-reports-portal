@@ -166,6 +166,8 @@ async function syncLines(c: D365Config, t0: number) {
     await sql`with moved as (delete from gl.orphans o using gl.headers h where h.recid = o.hdr returning o.*, h.company, h.acc_date, h.ptype)
       insert into gl.lines (hdr, company, acc_date, ptype, account, dimset, amt, rep) select hdr, company, acc_date, ptype, account, dimset, amt, rep from moved`;
   }
+  // Keep the monthly balances in step with what is loaded, so the statements fill up while the load runs.
+  await sql`refresh materialized view concurrently gl.mbal`;
   return { done, rows, total };
 }
 
