@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Sync({ searchParams }: { searchParams: Record<string, string> }) {
   await requireAdmin();
-  const configured = odataConfigured();
+  const configured = await odataConfigured();
   const companies = await sql<{ company: string; name: string }[]>`select company, coalesce(name, upper(company)) name from d365.companies order by company`;
   const latest = await sql<{ company: string; entity: string; rows: number; status: string; error: string | null; finished_at: Date | null; source: string }[]>`
     select distinct on (company, entity) company, entity, rows, status, error, finished_at, source from d365.sync_runs order by company, entity, id desc`;
@@ -27,8 +27,8 @@ export default async function Sync({ searchParams }: { searchParams: Record<stri
       <PageHead title="Data sync" sub="The portal reads a copy of D365 data, refreshed from OData daily and on demand." />
       {!configured && (
         <Note>
-          The live D365 connection isn&apos;t configured on this server, so the data shown is a snapshot loaded with <code>npm run load:snapshot</code>.
-          Set <code>D365_URL</code>, <code>D365_TENANT_ID</code>, <code>D365_CLIENT_ID</code>, <code>D365_CLIENT_SECRET</code> and <code>SYNC_COMPANIES</code> to sync live.
+          The live D365 connection isn&apos;t set up yet, so the data shown is the bundled snapshot.
+          Set it up in <a className="underline" href="/admin/d365">D365 integration</a> to sync live.
         </Note>
       )}
       {searchParams.done && <p className="text-[13px] mb-3"><span className="text-good">{searchParams.done} entities synced.</span>{Number(searchParams.errors) > 0 && <span className="text-bad"> {searchParams.errors} failed; see below.</span>}</p>}
