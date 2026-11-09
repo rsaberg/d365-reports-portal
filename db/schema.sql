@@ -110,6 +110,11 @@ create table if not exists portal.settings (
   key text primary key, value jsonb not null, updated_at timestamptz not null default now()
 );
 
+create table if not exists portal.d365_calls (
+  id bigserial primary key, at timestamptz not null default now(), user_email text, action text not null, detail jsonb
+);
+create index if not exists d365_calls_at_ix on portal.d365_calls (at desc);
+
 create table if not exists portal.targets (
   id bigserial primary key, company text not null, personnel_number text not null, month date not null, amount numeric not null,
   unique (company, personnel_number, month)
