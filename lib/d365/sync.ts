@@ -63,7 +63,7 @@ export async function syncEntity(company: string, defaultEntity: string, opts: {
   const [run] = await sql<{ id: number }[]>`insert into d365.sync_runs (source, company, entity) values ('odata', ${company}, ${entitySet}) returning id`;
   try {
     const filters = [def.filter, def.mode === "window" && windowFrom ? `${def.dateField} ge ${windowFrom}T00:00:00Z` : undefined].filter(Boolean).join(" and ");
-    const records = await readAll(entitySet, { company, select: Object.keys(def.map), filter: filters || undefined });
+    const records = await readAll(entitySet, { company: def.global ? null : company, select: Object.keys(def.map), filter: filters || undefined });
     const n = await replaceRows(def, company, records, def.mode === "window" ? windowFrom : undefined);
     await sql`update d365.sync_runs set rows = ${n}, status = 'ok', finished_at = now() where id = ${run.id}`;
     return { company, entity: entitySet, rows: n };

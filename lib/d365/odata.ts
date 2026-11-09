@@ -11,13 +11,14 @@ export async function odataConfigured() {
 }
 
 /** Read every page of an entity for one company. */
-export async function readAll(entitySet: string, opts: { company: string; select: string[]; filter?: string }) {
+export async function readAll(entitySet: string, opts: { company: string | null; select: string[]; filter?: string }) {
   const c = await requireConfig();
   const base = c.envUrl.replace(/\/$/, "");
   const params = new URLSearchParams({ "cross-company": "true", $select: opts.select.join(",") });
-  const filters = [`dataAreaId eq '${opts.company}'`];
+  // company null = a global entity (no dataAreaId, e.g. EmployeesV2): read it without the company filter.
+  const filters = opts.company ? [`dataAreaId eq '${opts.company}'`] : [];
   if (opts.filter) filters.push(opts.filter);
-  params.set("$filter", filters.join(" and "));
+  if (filters.length) params.set("$filter", filters.join(" and "));
   let url: string | null = `${base}/data/${entitySet}?${params.toString()}`;
   const out: Record<string, unknown>[] = [];
   while (url) {
