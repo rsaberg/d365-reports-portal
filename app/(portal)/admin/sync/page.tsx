@@ -1,16 +1,26 @@
 import { requireAdmin } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { syncNow } from "@/lib/admin-actions";
-import { odataConfigured } from "@/lib/d365/odata";
+import { d365Config } from "@/lib/d365/config";
+import { defaultCompanies, snapshotCompanies, syncCompanyList } from "@/lib/d365/sync";
+import SyncRunner from "@/components/SyncRunner";
 import { ENTITIES } from "@/lib/d365/entities";
 import { PageHead, Panel, Pill, Note } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-export default async function Sync({ searchParams }: { searchParams: Record<string, string> }) {
+export default async function Sync() {
   await requireAdmin();
-  const configured = await odataConfigured();
-  const companies = await sql<{ company: string; name: string }[]>`select company, coalesce(name, upper(company)) name from d365.companies order by company`;
+  const conn = await d365Config();
+  const configured = Boolean(conn);
+  // Companies come from D365 itself (legal entities) through the D365 integration connection.
+  let live: { company: string; name: string }[] = [];
+  let liveError = "";
+  if (configured) {
+    try { live = (await syncCompanyList()).map((c) => ({ company: c.company, name: c.name })).sort((a, b) => a.company.localeCompare(b.company)); }
+    catch (e) { liveError = e instanceof Error ? e.message : String(e); }
+  }
+  const snapshot = await snapshotCompanies();
+  const checked = (await defaultCompanies()).filter((c) => live.some((x) => x.company === c));
   const latest = await sql<{ company: string; entity: string; rows: number; status: string; error: string | null; finished_at: Date | null; source: string }[]>`
     select distinct on (company, entity) company, entity, rows, status, error, finished_at, source from d365.sync_runs order by company, entity, id desc`;
   const counts = await sql<{ company: string; invoices: number; lines: number; trans: number; customers: number }[]>`
@@ -20,7 +30,6 @@ export default async function Sync({ searchParams }: { searchParams: Record<stri
       (select count(*) from d365.cust_trans t where t.company = c.company)::int trans,
       (select count(*) from d365.customers x where x.company = c.company)::int customers
     from d365.companies c order by 1`;
-  const enabled = (process.env.SYNC_COMPANIES ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
 
   return (
     <>
@@ -31,18 +40,16 @@ export default async function Sync({ searchParams }: { searchParams: Record<stri
           Set it up in <a className="underline" href="/admin/d365">D365 integration</a> to sync live.
         </Note>
       )}
-      {searchParams.done && <p className="text-[13px] mb-3"><span className="text-good">{searchParams.done} entities synced.</span>{Number(searchParams.errors) > 0 && <span className="text-bad"> {searchParams.errors} failed; see below.</span>}</p>}
-      {searchParams.error && <p className="text-bad text-[13px] mb-3">{searchParams.error}</p>}
+      {configured && (
+        <p className="text-[13px] text-muted mb-3">
+          Connection: <span className="num">{conn!.envUrl.replace(/^https:\/\//, "")}</span> · company <b>{(conn!.company || "–").toUpperCase()}</b> ·{" "}
+          <a className="underline" href="/admin/d365">change in D365 integration</a>
+        </p>
+      )}
+      {liveError && <p className="text-bad text-[13px] mb-3">Couldn&apos;t read the companies from D365: {liveError}</p>}
       <div className="grid xl:grid-cols-[1fr_1.5fr] gap-4">
         <Panel title="Sync now">
-          <form action={syncNow} className="grid gap-3">
-            <fieldset className="grid gap-1.5"><legend className="label mb-1">Companies</legend>
-              {companies.map((c) => <label key={c.company} className="flex items-center gap-2 text-[13px]"><input type="checkbox" name="companies" value={c.company} defaultChecked={enabled.includes(c.company) || !enabled.length} />{c.company.toUpperCase()} <span className="text-muted">{c.name}</span></label>)}
-            </fieldset>
-            <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" name="full" /> Full reload of invoice history (slower)</label>
-            <div><button className="btn btn-primary" disabled={!configured}>Sync from D365</button></div>
-            <p className="text-[12px] text-muted">Invoices reload from 1 January last year; customer transactions, open orders, quotations and returns reload in full.</p>
-          </form>
+          <SyncRunner companies={live} checked={checked} snapshot={snapshot} configured={configured && !liveError} />
         </Panel>
         <Panel title="Rows in the portal">
           <div className="overflow-x-auto border border-line rounded-lg">
