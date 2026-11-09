@@ -18,7 +18,7 @@ export default async function PortalLayout({ children }: { children: React.React
     <div className="min-h-full lg:grid lg:grid-cols-[232px_1fr]">
       <aside className="hidden lg:block bg-nav">
         <div className="sticky top-0 h-screen">
-        <Suspense><Sidebar isAdmin={user.role === "admin"} appName={appName} /></Suspense>
+        <Suspense><Sidebar isAdmin={user.role === "admin"} finance={user.role !== "sales"} appName={appName} /></Suspense>
         </div>
       </aside>
       <div className="min-w-0">
@@ -26,7 +26,7 @@ export default async function PortalLayout({ children }: { children: React.React
           <details className="lg:hidden relative">
             <summary className="btn cursor-pointer list-none">Menu</summary>
             <div className="absolute z-30 mt-2 w-64 h-[70vh] rounded-lg overflow-hidden shadow-xl">
-              <Suspense><Sidebar isAdmin={user.role === "admin"} appName={appName} /></Suspense>
+              <Suspense><Sidebar isAdmin={user.role === "admin"} finance={user.role !== "sales"} appName={appName} /></Suspense>
             </div>
           </details>
           <div className="text-[12px] text-muted">
