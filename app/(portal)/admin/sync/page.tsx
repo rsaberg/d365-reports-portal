@@ -3,10 +3,12 @@ import { sql } from "@/lib/db";
 import { d365Config } from "@/lib/d365/config";
 import { defaultCompanies, snapshotCompanies, syncCompanyList } from "@/lib/d365/sync";
 import SyncRunner from "@/components/SyncRunner";
+import GlSyncRunner from "@/components/GlSyncRunner";
 import { ENTITIES } from "@/lib/d365/entities";
 import { PageHead, Panel, Pill, Note } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export default async function Sync() {
   await requireAdmin();
@@ -58,6 +60,9 @@ export default async function Sync() {
           </div>
         </Panel>
       </div>
+      <Panel title="General ledger (financial statements)" className="mt-4" sub="All companies · full history">
+        <GlSyncRunner configured={configured && !liveError} />
+      </Panel>
       <Panel title="Last run per entity" className="mt-4" sub={`${ENTITIES.length} D365 entities`}>
         <div className="overflow-x-auto border border-line rounded-lg">
           <table className="dtable"><thead><tr><th>Company</th><th>Entity</th><th>Source</th><th className="r">Rows</th><th>Status</th><th>Finished</th><th>Error</th></tr></thead>
