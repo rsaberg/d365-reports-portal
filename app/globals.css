@@ -37,4 +37,46 @@ table.dtable .r { text-align: right; }
 .recharts-text { fill: rgb(var(--muted)); font-size: 11px; }
 .recharts-cartesian-grid line { stroke: var(--grid); }
 .recharts-cartesian-axis-line { stroke: var(--axis); }
+/* Administration › D365 integration (same layout as ONE365 / Elsewedy WMS) */
+.d365 { position: relative; display: grid; gap: 14px; font-size: 13px; }
+.d365 h2 { font-size: 22px; font-weight: 600; letter-spacing: -.01em; padding-inline-end: 150px; text-wrap: balance; }
+.d365 .lead { color: rgb(var(--muted)); max-width: 80ch; line-height: 1.7; margin-top: -6px; }
+.d365 .langs { position: absolute; inset-inline-end: 0; top: 0; display: inline-flex; border: 1px solid rgb(var(--line)); border-radius: 6px; overflow: hidden; }
+.d365 .langs button { padding: 5px 10px; font-size: 12px; background: rgb(var(--surface)); color: rgb(var(--muted)); }
+.d365 .langs button.on { background: rgb(var(--accent)); color: rgb(var(--accent-ink)); }
+.d365 .pane { background: rgb(var(--surface)); border: 1px solid rgb(var(--line)); border-radius: 8px; padding: 16px; min-width: 0; }
+.d365 .pane h3 { font-size: 15px; font-weight: 600; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.d365 .g2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 14px; }
+.d365 label { display: block; font-size: 11px; letter-spacing: .04em; color: rgb(var(--muted)); font-weight: 600; margin: 8px 0 4px; }
+.d365 input:not([type=file]), .d365 select, .d365 textarea { width: 100%; background: rgb(var(--bg)); border: 1px solid rgb(var(--line)); border-radius: 6px; padding: 7px 9px; font-size: 13px; min-height: 36px; color: rgb(var(--ink)); }
+.d365 textarea { min-height: 90px; font-family: 'IBM Plex Mono', ui-monospace, Consolas, monospace; direction: ltr; }
+.d365 .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.d365 .pane button, .d365 .btn-file { display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; padding: 8px 14px; font-size: 13px; font-weight: 500; min-height: 36px; cursor: pointer;
+  background: rgb(var(--accent)); color: rgb(var(--accent-ink)); border: 1px solid rgb(var(--accent)); margin: 0; letter-spacing: 0; }
+.d365 .pane button.sec { background: rgb(var(--surface)); color: rgb(var(--ink)); border-color: rgb(var(--line)); }
+.d365 .pane button.sec:hover { background: rgb(var(--sunken)); }
+.d365 .pane button.dan { background: rgb(var(--surface)); color: rgb(var(--bad)); border-color: rgb(var(--bad) / .5); }
+.d365 .pane button.sm { padding: 4px 10px; min-height: 30px; font-size: 12px; white-space: nowrap; }
+.d365 .pane button:disabled { opacity: .5; cursor: not-allowed; }
+.d365 .pane button.link { color: rgb(var(--accent)); background: none; border: 0; padding: 2px 6px; }
+.d365 .badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 500; background: rgb(var(--sunken)); color: rgb(var(--ink)); border: 1px solid rgb(var(--line)); }
+.d365 .badge.ok { color: rgb(var(--good)); background: rgb(var(--good) / .1); border-color: rgb(var(--good) / .3); }
+.d365 .badge.bad { color: rgb(var(--bad)); background: rgb(var(--bad) / .1); border-color: rgb(var(--bad) / .3); }
+.d365 .badge.warn { color: rgb(var(--warn)); background: rgb(var(--warn) / .1); border-color: rgb(var(--warn) / .3); }
+.d365 .badge.info { color: rgb(var(--accent)); background: rgb(var(--accent) / .1); border-color: rgb(var(--accent) / .3); }
+.d365 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.d365 .drop { display: block; border: 2px dashed rgb(var(--line)); border-radius: 8px; padding: 22px; text-align: center; cursor: pointer; color: rgb(var(--ink)); font-size: 13px; letter-spacing: 0; font-weight: 500; margin: 0; }
+.d365 .drop:hover { border-color: rgb(var(--accent)); background: rgb(var(--accent) / .04); }
+.d365 .tw { overflow-x: auto; border: 1px solid rgb(var(--line)); border-radius: 8px; }
+.d365 table { width: 100%; border-collapse: collapse; }
+.d365 th { text-align: start; font-size: 11px; letter-spacing: .04em; color: rgb(var(--muted)); font-weight: 600; background: rgb(var(--sunken)); padding: 8px 10px; white-space: nowrap; }
+.d365 td { padding: 8px 10px; border-top: 1px solid rgb(var(--line)); vertical-align: top; }
+.d365 td.sub { background: rgb(var(--sunken) / .6); }
+.d365 pre.resp { margin-top: 8px; max-height: 420px; overflow: auto; background: rgb(var(--sunken)); border: 1px solid rgb(var(--line)); border-radius: 6px; padding: 10px; font-size: 12px; direction: ltr; text-align: left; white-space: pre-wrap; word-break: break-word; font-family: 'IBM Plex Mono', ui-monospace, Consolas, monospace; }
+.d365 .mono { font-family: 'IBM Plex Mono', ui-monospace, Consolas, monospace; }
+.d365 .mut { color: rgb(var(--muted)); }
+.d365 .small { font-size: 12px; }
+.d365 .msg-ok { margin-top: 10px; color: rgb(var(--good)); font-size: 13px; }
+.d365 .msg-err { margin-top: 10px; color: rgb(var(--bad)); font-size: 13px; }
+@media (max-width: 640px) { .d365 h2 { padding-inline-end: 0; padding-top: 40px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
