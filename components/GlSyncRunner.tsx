@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-type Status = { steps: { step: string; rows: string; total: string | null; updated_at: string }[]; db: { size: string; gl: string }; companies: { company: string; vouchers: number; first: string | null; last: string | null }[]; orphans: number };
+type Status = { steps: { step: string; rows: string; total: string | null; updated_at: string }[]; db: { size: string; gl: string; mb: number; limitMb: number }; companies: { company: string; vouchers: number; first: string | null; last: string | null }[]; orphans: number };
 const LABEL: Record<string, string> = { master: "Accounts, periods, ledgers", headers: "Vouchers", lines: "Voucher lines", refresh: "Monthly balances" };
 
 /** General ledger sync from the browser: master data → vouchers → lines → balances, each step resumed until done. */
@@ -38,6 +38,12 @@ export default function GlSyncRunner({ configured }: { configured: boolean }) {
       setBusy("");
       load();
     }
+  }
+  async function setLimit() {
+    const v = window.prompt("Stop loading when the database reaches (MB). Supabase Free allows 500 MB; Pro includes 8 GB.", String(st?.db.limitMb ?? 450));
+    if (!v) return;
+    try { setSt(await post({ action: "limit", mb: Number(v) })); setMsg({ ok: "Limit saved." }); }
+    catch (e) { setMsg({ err: e instanceof Error ? e.message : String(e) }); }
   }
   async function reset() {
     if (!window.confirm("Delete the general ledger copy in the portal and reload it from D365? Nothing changes in D365.")) return;
@@ -79,7 +85,8 @@ export default function GlSyncRunner({ configured }: { configured: boolean }) {
       <div className="flex flex-wrap gap-2 items-center">
         <button className="btn btn-primary" disabled={!configured || !!busy} onClick={run}>{busy === "run" ? "Syncing…" : "Sync general ledger"}</button>
         <button className="btn" disabled={!configured || !!busy} onClick={reset}>Start over</button>
-        {st && <span className="text-[12px] text-muted">Database {st.db.size} · general ledger {st.db.gl}{st.orphans ? ` · ${st.orphans.toLocaleString()} lines waiting for their voucher` : ""}</span>}
+        {st && <span className="text-[12px] text-muted">Database {st.db.size} of {st.db.limitMb} MB allowed · general ledger {st.db.gl}{st.orphans ? ` · ${st.orphans.toLocaleString()} lines waiting for their voucher` : ""}</span>}
+        {st && <button className="btn" disabled={!!busy} onClick={setLimit}>Size limit</button>}
       </div>
       {msg.ok && <p className="text-good text-[13px]">{msg.ok}</p>}
       {msg.err && <p className="text-bad text-[13px]">{msg.err}</p>}
