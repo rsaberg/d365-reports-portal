@@ -3,6 +3,8 @@
 Sales reporting and analysis on top of Dynamics 365 Finance & Operations.
 Next.js 14 · Postgres (Supabase) · D365 OData sync · users and roles managed in the portal.
 
+Live: https://d365-reports-portal.vercel.app
+
 ## How it works
 
 ```
