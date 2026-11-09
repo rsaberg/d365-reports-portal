@@ -14,5 +14,6 @@ export const ADMIN = [
   { href: "/admin/users", title: "Users & access" },
   { href: "/admin/targets", title: "Sales targets" },
   { href: "/admin/settings", title: "Settings" },
+  { href: "/admin/d365", title: "D365 integration" },
   { href: "/admin/sync", title: "Data sync" },
 ];
