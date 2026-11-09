@@ -21,6 +21,7 @@
 html, body { height: 100%; }
 body { background: rgb(var(--bg)); color: rgb(var(--ink)); font-feature-settings: "tnum" 1; }
 .num { font-family: 'IBM Plex Mono', ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; }
+.link { color: rgb(var(--accent)); } .link:hover { text-decoration: underline; }
 .label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: rgb(var(--muted)); font-weight: 600; }
 .card { background: rgb(var(--surface)); border: 1px solid rgb(var(--line)); border-radius: 8px; }
 .input { background: rgb(var(--bg)); border: 1px solid rgb(var(--line)); border-radius: 6px; padding: 6px 9px; font-size: 13px; min-height: 34px; color: rgb(var(--ink)); }
