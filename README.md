@@ -53,6 +53,14 @@ where they are the responsible person, in assigned companies).
    - First load: `npm run sync -- usmf,demf --full`, or *Administration > Data sync* in the portal.
 4. **Run:** `npm run dev` (local) or deploy to Vercel (set the same env vars + `CRON_SECRET`; `vercel.json` schedules the sync daily at 03:00 UTC — Vercel Hobby allows one cron run a day; use Pro for every 2 hours).
 
+### Vercel + Supabase without typing secrets
+Link the Supabase project to the Vercel project (Supabase › Integrations › Vercel). The app reads `POSTGRES_URL`
+when `DATABASE_URL` is not set, and signs sessions with `SUPABASE_SECRET_KEY` when `SESSION_SECRET` is not set
+(set `SESSION_SECRET` to rotate sessions independently). Then, once:
+1. open `/api/setup?snapshot=1` — creates the `d365` and `portal` schemas and loads the snapshot;
+   it answers only while no administrator exists (or with `?token=` when `SETUP_TOKEN` is set);
+2. open the site — the sign-in page asks for the first administrator until one exists.
+
 ### Demo without a D365 connection
 `npm run load:snapshot` loads `snapshot/` — a copy of USMF and DEMF exported from the Grow Path demo environment
 (row counts and totals verified against D365).
