@@ -5,10 +5,25 @@ declare global {
   var __sql: ReturnType<typeof postgres> | undefined;
 }
 
-/** One shared connection pool. DATABASE_URL = Supabase connection string (use the pooler URL on Vercel). */
+/**
+ * Connection string: DATABASE_URL, or POSTGRES_URL synced by the Supabase <-> Vercel integration (pooler URL).
+ * The integration adds a non-standard `supa` query parameter that Postgres would reject, so it is dropped.
+ */
+function connectionString() {
+  const raw = process.env.DATABASE_URL || process.env.POSTGRES_URL || "postgres://localhost/portal";
+  try {
+    const u = new URL(raw);
+    u.searchParams.delete("supa");
+    return u.toString();
+  } catch {
+    return raw;
+  }
+}
+
+/** One shared connection pool. */
 export const sql =
   globalThis.__sql ??
-  postgres(process.env.DATABASE_URL ?? "postgres://localhost/portal", {
+  postgres(connectionString(), {
     max: Number(process.env.DB_POOL_MAX ?? 5),
     onnotice: () => {},
     prepare: false, // required for Supabase's transaction pooler

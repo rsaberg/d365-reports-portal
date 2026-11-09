@@ -49,3 +49,13 @@ export async function ensureAdmin(email: string, name: string, password: string)
   await sql`insert into portal.users (email, name, password_hash, role) values (${email}, ${name}, ${await bcrypt.hash(password, 10)}, 'admin')`;
   return true;
 }
+
+/** True while the portal has no administrator yet (also when the tables do not exist). */
+export async function needsSetup() {
+  try {
+    const [r] = await sql<{ n: number }[]>`select count(*)::int as n from portal.users where role = 'admin'`;
+    return r.n === 0;
+  } catch {
+    return true;
+  }
+}
