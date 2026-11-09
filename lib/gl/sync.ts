@@ -1,5 +1,5 @@
 import { sql } from "../db";
-import { d365Token, requireConfig, type D365Config } from "../d365/config";
+import { d365Token, getSetting, requireConfig, type D365Config } from "../d365/config";
 import { ensureGl } from "./schema";
 
 /**
@@ -107,7 +107,9 @@ async function syncLines(c: D365Config, t0: number) {
   const total = rows + ((await count(c, `GeneralJournalAccountEntryBiEntities?$filter=SourceKey gt ${cursor}`)) ?? 0);
   await save("lines", cursor, rows, total);
   const knownDims = new Set<number>();
+  let pages = 0;
   while (Date.now() - t0 < BUDGET_MS) {
+    if (pages++ % 5 === 0) await checkRoom();
     const page = await get(c, `GeneralJournalAccountEntryBiEntities?$select=SourceKey,GeneralJournalEntry,MainAccount,LedgerDimension,LedgerDimensionValuesJson,AccountingCurrencyAmount,ReportingCurrencyAmount&$filter=SourceKey gt ${cursor}&$orderby=SourceKey&$top=${PAGE}`);
     if (!page.length) break;
     const agg = new Map<string, { hdr: number; account: string; dimset: number; amt: number; rep: number; key: number }>();
@@ -192,7 +194,21 @@ export async function glStatus() {
   const companies = await sql<{ company: string; vouchers: number; first: Date | null; last: Date | null }[]>`
     select company, count(*)::int vouchers, min(acc_date) first, max(acc_date) last from gl.headers group by 1 order by 1`;
   const [orph] = await sql<{ n: number }[]>`select count(*)::int n from gl.orphans`;
-  return { steps, db, companies, orphans: orph.n };
+  const tables = await sql<{ t: string; size: string }[]>`select c.relname t, pg_size_pretty(pg_total_relation_size(c.oid)) size
+    from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'gl' and c.relkind in ('r', 'm') order by pg_total_relation_size(c.oid) desc`;
+  const [srv] = await sql<{ sb: string; mc: string; bytes: string }[]>`select current_setting('shared_buffers') sb, current_setting('max_connections') mc, pg_database_size(current_database()) bytes`;
+  return { steps, db: { ...db, mb: Math.round(Number(srv.bytes) / 1048576), limitMb: await dbLimitMb() }, companies, orphans: orph.n, tables, server: { sharedBuffers: srv.sb, maxConnections: srv.mc } };
+}
+
+/** Database size cap for the sync (MB): stops loading before a small plan's limit makes the shared database read-only. */
+export async function dbLimitMb() {
+  const v = Number(process.env.GL_DB_LIMIT_MB) || Number(await getSetting<number>("gl_db_limit_mb")) || 450;
+  return v;
+}
+async function checkRoom() {
+  const [r] = await sql<{ b: string }[]>`select pg_database_size(current_database()) b`;
+  const mb = Number(r.b) / 1048576, lim = await dbLimitMb();
+  if (mb >= lim) throw new Error(`Stopped: the database is ${Math.round(mb)} MB, the limit set for the sync is ${lim} MB. Raise it in Data sync if your Supabase plan allows more.`);
 }
 
 /** Start over (e.g. after changing the D365 environment). */
