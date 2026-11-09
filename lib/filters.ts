@@ -1,3 +1,4 @@
+import { defaultCompany } from "./d365/config";
 import "server-only";
 import { sql } from "./db";
 import type { User } from "./auth";
@@ -25,8 +26,9 @@ export async function getScope(user: User, sp: SP): Promise<Scope> {
     ? await sql<{ company: string; name: string }[]>`select company, coalesce(name, upper(company)) as name from d365.companies where company in ${sql(user.companies)} order by company`
     : [];
   const requested = one(sp.company);
+  const defCompany = await defaultCompany();
   const company = companies.find((c) => c.company === requested)?.company
-    ?? companies.find((c) => c.company === process.env.DEFAULT_COMPANY)?.company ?? companies[0]?.company ?? "";
+    ?? companies.find((c) => c.company === defCompany)?.company ?? companies[0]?.company ?? "";
 
   // Years with sales activity. Default period = most recent year with at least 10% of the busiest year's lines
   // (keeps a stray late invoice from making the default period empty).
