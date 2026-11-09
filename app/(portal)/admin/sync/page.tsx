@@ -16,7 +16,7 @@ export default async function Sync() {
   let live: { company: string; name: string }[] = [];
   let liveError = "";
   if (configured) {
-    try { live = (await syncCompanyList()).map((c) => ({ company: c.company, name: c.name })).sort((a, b) => a.company.localeCompare(b.company)); }
+    try { live = (await syncCompanyList()).map((c) => ({ company: c.company, name: c.name ?? c.company.toUpperCase() })).sort((a, b) => a.company.localeCompare(b.company)); }
     catch (e) { liveError = e instanceof Error ? e.message : String(e); }
   }
   const snapshot = await snapshotCompanies();
