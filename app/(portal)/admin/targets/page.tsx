@@ -1,3 +1,4 @@
+import { defaultCompany } from "@/lib/d365/config";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -10,7 +11,8 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 export default async function Targets({ searchParams }: { searchParams: Record<string, string> }) {
   await requireAdmin();
   const companies = await sql<{ company: string; name: string }[]>`select company, coalesce(name, upper(company)) name from d365.companies order by company`;
-  const company = companies.find((c) => c.company === searchParams.company)?.company ?? process.env.DEFAULT_COMPANY ?? companies[0]?.company;
+  const defCompany = await defaultCompany();
+  const company = companies.find((c) => c.company === searchParams.company)?.company ?? companies.find((c) => c.company === defCompany)?.company ?? companies[0]?.company;
   const years = (await sql<{ y: number }[]>`select distinct extract(year from invoice_date)::int y from d365.invoice_headers where company = ${company} order by 1`).map((r) => r.y);
   const year = Number(searchParams.year) || years[years.length - 1] || new Date().getFullYear();
   // Salespeople = anyone responsible for invoices in this company, plus anyone who already has targets.
