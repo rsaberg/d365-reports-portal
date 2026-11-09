@@ -13,7 +13,18 @@ export const SALES_REPORTS = [
 export const ADMIN = [
   { href: "/admin/users", title: "Users & access" },
   { href: "/admin/targets", title: "Sales targets" },
+  { href: "/admin/statements", title: "Statement layout" },
   { href: "/admin/settings", title: "Settings" },
   { href: "/admin/d365", title: "D365 integration" },
   { href: "/admin/sync", title: "Data sync" },
+];
+export const FINANCE = [
+  { href: "/finance", title: "Financial overview" },
+  { href: "/finance/income", title: "Income statement" },
+  { href: "/finance/balance", title: "Balance sheet" },
+  { href: "/finance/cashflow", title: "Cash flow" },
+  { href: "/finance/trial", title: "Trial balance" },
+  { href: "/finance/ratios", title: "Financial ratios" },
+  { href: "/finance/budget", title: "Budget vs actual" },
+  { href: "/finance/vouchers", title: "Voucher search" },
 ];
