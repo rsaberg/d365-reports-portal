@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   const time = async (name: string, f: () => Promise<unknown>) => {
     const t = Date.now();
     try {
-      await Promise.race([f(), new Promise((_, rej) => setTimeout(() => rej(new Error("over 12 s")), 12000))]);
+      await Promise.race([f(), new Promise((_, rej) => setTimeout(() => rej(new Error("over 12 s")), 20000))]);
       steps[name] = `${Date.now() - t} ms`;
     } catch (e) { steps[name] = `error after ${Date.now() - t} ms: ${e instanceof Error ? e.message : e}`; }
   };
@@ -26,6 +26,10 @@ export async function GET(req: Request) {
   await time("documentRows so", () => documentRows(company, "so", "2026-11-10"));
   await time("documentRows po", () => documentRows(company, "po", "2026-11-10"));
   await time("userActivity", () => userActivity(company, "2000-01-01", "2026-11-10"));
+  const types = await documentTypes(company);
+  await time("all rows sequential", async () => { for (const t of types) await documentRows(company, t.key, "2026-11-10"); });
+  for (const t of types) await time(`rows ${t.key}`, () => documentRows(company, t.key, "2026-11-10"));
+  await time("all rows parallel", () => Promise.all(types.map((t) => documentRows(company, t.key, "2026-11-10"))));
   await time("enteredCounts", () => enteredCounts(company, "2026-08-01", "2026-11-10"));
   return NextResponse.json({ steps, activity });
 }
