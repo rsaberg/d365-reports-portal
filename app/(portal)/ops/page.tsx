@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { reportScope, today } from "@/lib/page";
-import { documentTypes, documentRows } from "@/lib/reports/ops";
+import { documentTypes, documentRows, type DocRow } from "@/lib/reports/ops";
 import { fmt } from "@/lib/format";
 import { Filters, Kpi, KpiRow, PageHead, Panel, Empty } from "@/components/ui";
 import DataTable from "@/components/DataTable";
@@ -18,9 +18,12 @@ export default async function Page({ searchParams }: { searchParams: Record<stri
   const posted = types.reduce((a, t) => a + t.posted, 0);
   const open = types.reduce((a, t) => a + t.open, 0);
   // Everything not yet posted, across modules, for the action list.
-  const pending = (await Promise.all(types.map(async (t) => (await documentRows(s.company, t.key, asOf))
-    .filter((r) => !r.posted && r.stage !== "Cancelled").map((r) => ({ ...r, module: t.module, type: t.name.replace(/s$/, ""), key: t.key })))))
-    .flat().sort((a, b) => (b.age ?? -1) - (a.age ?? -1));
+  // Documents still waiting, one type at a time (sequential queries keep the page on one pooled connection).
+  const pending: (DocRow & { module: string; type: string; key: string })[] = [];
+  for (const t of types) {
+    for (const r of await documentRows(s.company, t.key, asOf)) if (!r.posted && r.stage !== "Cancelled") pending.push({ ...r, module: t.module, type: t.name.replace(/s$/, ""), key: t.key });
+  }
+  pending.sort((a, b) => (b.age ?? -1) - (a.age ?? -1));
   const modules = [...new Set(types.map((t) => t.module))];
   const q = `company=${s.company}`;
 
