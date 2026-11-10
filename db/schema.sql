@@ -214,3 +214,12 @@ create table if not exists d365.sec_users ( user_id text primary key, name text,
 create table if not exists d365.sec_roles ( role text primary key, name text, description text, license text );
 create table if not exists d365.sec_user_roles ( user_id text not null, role text not null, role_name text, status text, mode text );
 create index if not exists sec_user_roles_user on d365.sec_user_roles (user_id);
+
+-- Released products (item master) and inventory movements from InventTransV5, summed per item, day and update type.
+create table if not exists d365.products ( company text not null, item text not null, name text, item_group text, unit text, model_group text, primary key (company, item) );
+create table if not exists d365.invent_mov (
+  company text not null, item text not null, day date not null, fin smallint not null,
+  rq numeric default 0, rv numeric default 0, iq numeric default 0, iv numeric default 0, n int default 0
+);
+create index if not exists ix_invent_mov on d365.invent_mov (company, item, day);
+create table if not exists d365.invent_mov_runs ( company text not null, month text not null, rows int, trans int, at timestamptz default now(), primary key (company, month) );
