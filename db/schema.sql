@@ -125,6 +125,36 @@ insert into portal.settings (key, value) values
   ('aging_basis', '"due"')
 on conflict (key) do nothing;
 
+
+-- ---------- Transaction tracking (documents and journals of every module) ----------
+create table if not exists d365.sales_orders (
+  company text not null, sales_order text not null, created_at timestamptz, status int, doc_status int, taker text, customer text,
+  requested_ship date, primary key (company, sales_order)
+);
+create table if not exists d365.purch_orders (
+  company text not null, purchase_order text not null, vendor text, status int, approval int, accounting_date date, orderer text,
+  primary key (company, purchase_order)
+);
+create table if not exists d365.prod_orders (
+  company text not null, prod_order text not null, item text, status int, qty numeric default 0, delivery_date date, warehouse text,
+  primary key (company, prod_order)
+);
+create table if not exists d365.transfer_orders (
+  company text not null, transfer_order text not null, status int, from_wh text, to_wh text, ship_date date,
+  primary key (company, transfer_order)
+);
+create table if not exists d365.journals (
+  company text not null, source text not null, module text not null, kind text not null, journal text not null, journal_name text,
+  description text, posted int default 0, posted_at timestamptz, posted_by text, amount numeric default 0,
+  primary key (company, source, journal)
+);
+-- What should have been entered in D365 (typed in the portal), compared with what was entered.
+create table if not exists portal.expected_entries (
+  id bigserial primary key, company text not null, day date not null, doc_type text not null, expected int not null,
+  note text, entered_by text, updated_at timestamptz not null default now(),
+  unique (company, day, doc_type)
+);
+
 -- ---------- Reporting views ----------
 create or replace view d365.v_sales as
 select l.*, h.customer, h.responsible, c.name as customer_name, c.cust_group, w.name as responsible_name
