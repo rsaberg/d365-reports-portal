@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { SALES_REPORTS, ADMIN, FINANCE, OPS, MODULE_NAV } from "@/lib/nav";
+import { ADMIN, NAV_MODULES } from "@/lib/nav";
 import { One365Logo, GrowPathMark } from "./Brand";
 
 export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolean; finance: boolean; appName: string }) {
@@ -26,26 +26,44 @@ export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolea
       </Link>
     );
   };
-  // A module is a collapsible menu; its reports are the items under it. The open module is the one being viewed.
-  const moduleMenu = (m: (typeof MODULE_NAV)[number]) => {
-    const here = path === m.href;
-    const cur = sp.get("r") ?? m.items[0][0];
-    const base = new URLSearchParams(qFor(false).slice(1));
-    if (m.items.length === 1) return item(m.href, m.title);
+  // Every module is a collapsible menu: its dashboard first, then its reports. The module being viewed stays open.
+  const isActive = (href: string) => {
+    const [p, query] = href.split("?");
+    const r = new URLSearchParams(query ?? "").get("r");
+    if (p.startsWith("/m/")) return path === p && (r ? sp.get("r") === r : !sp.get("r") || sp.get("r") === "dashboard");
+    if (p === "/" || p === "/finance" || p === "/ops") return path === p;
+    return path.startsWith(p);
+  };
+  const hrefFor = (href: string) => {
+    const [p, query] = href.split("?");
+    const keep = new URLSearchParams(qFor(p.startsWith("/finance")).slice(1));
+    const r = new URLSearchParams(query ?? "").get("r");
+    if (r) keep.set("r", r);
+    return keep.toString() ? `${p}?${keep}` : p;
+  };
+  const moduleMenu = (m: (typeof NAV_MODULES)[number]) => {
+    const here = m.items.some((i) => isActive(i.href));
+    if (m.items.length === 1) {
+      return (
+        <Link key={m.key} href={hrefFor(m.items[0].href)} aria-current={here ? "page" : undefined}
+          className={`block rounded-md px-3 py-1.5 text-[13px] border-s-2 ${here ? "bg-white/10 text-white font-medium border-[#F58220]" : "border-transparent text-nav-ink/80 hover:bg-white/5 hover:text-white"}`}>
+          {m.title}
+        </Link>
+      );
+    }
     return (
-      <details key={m.href} open={here} className="group">
+      <details key={m.key} open={here} className="group">
         <summary className={`list-none cursor-pointer flex items-center justify-between rounded-md px-3 py-1.5 text-[13px] border-s-2 border-transparent [&::-webkit-details-marker]:hidden ${here ? "text-white font-medium" : "text-nav-ink/80 hover:bg-white/5 hover:text-white"}`}>
           {m.title}
           <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" className="opacity-60 transition-transform group-open:rotate-90"><path d="M4 2l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
         </summary>
         <div className="grid gap-0.5 ms-3 ps-1 border-s border-white/10 mt-0.5 mb-1">
-          {m.items.map(([k, label]) => {
-            const active = here && cur === k;
-            const q = new URLSearchParams(base); q.set("r", k);
+          {m.items.map((i) => {
+            const active = isActive(i.href);
             return (
-              <Link key={k} href={`${m.href}?${q}`} aria-current={active ? "page" : undefined}
+              <Link key={i.href} href={hrefFor(i.href)} aria-current={active ? "page" : undefined}
                 className={`block rounded-md px-3 py-1 text-[12.5px] border-s-2 ${active ? "bg-white/10 text-white font-medium border-[#F58220]" : "border-transparent text-nav-ink/70 hover:bg-white/5 hover:text-white"}`}>
-                {label}
+                {i.label}
               </Link>
             );
           })}
@@ -59,29 +77,10 @@ export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolea
         <One365Logo size={30} onDark />
         <div className="text-[10.5px] tracking-[.08em] uppercase text-nav-ink/55 font-semibold mt-2 ps-0.5">Dynamics 365 F&amp;O</div>
       </div>
-      <div className="grid gap-0.5">{item("/", "Sales dashboard")}</div>
       <div className="grid gap-0.5">
-        <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Sales reports</div>
-        {SALES_REPORTS.map((r) => item(r.href, r.title))}
+        <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Modules</div>
+        {NAV_MODULES.filter((m) => finance || !m.managers).map(moduleMenu)}
       </div>
-      {finance && (
-        <div className="grid gap-0.5">
-          <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Finance</div>
-          {FINANCE.map((r) => item(r.href, r.title))}
-        </div>
-      )}
-      {finance && (
-        <div className="grid gap-0.5">
-          <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Modules</div>
-          {MODULE_NAV.map(moduleMenu)}
-        </div>
-      )}
-      {finance && (
-        <div className="grid gap-0.5">
-          <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Operations</div>
-          {OPS.map((r) => item(r.href, r.title))}
-        </div>
-      )}
       {isAdmin && (
         <div className="grid gap-0.5">
           <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Administration</div>

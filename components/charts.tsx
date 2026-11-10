@@ -175,3 +175,23 @@ export function PctLine({ data, name }: { data: { m: string; v: number }[]; name
     </div>
   );
 }
+
+/** Generic monthly trend: series a as an area (left axis), optional b as a dashed line (right axis). */
+export function Trend({ data, a, b, cur }: { data: { m: string; a: number; b?: number }[]; a: string; b?: string; cur?: string }) {
+  return (
+    <div className="h-[240px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
+          <CartesianGrid vertical={false} />
+          <XAxis dataKey="m" tickFormatter={monthLabel} tickLine={false} axisLine={{ stroke: "var(--axis)" }} interval="preserveStartEnd" />
+          <YAxis yAxisId="a" tickFormatter={short} tickLine={false} axisLine={false} width={48} />
+          {b && <YAxis yAxisId="b" orientation="right" tickFormatter={short} tickLine={false} axisLine={false} width={36} />}
+          <Tooltip content={<Tip labelFmt={monthLabel} />} />
+          <Legend iconType="plainline" iconSize={14} wrapperStyle={{ fontSize: 12 }} />
+          <Area yAxisId="a" type="linear" dataKey="a" name={cur ? `${a} (${cur})` : a} stroke="var(--c2)" strokeWidth={2} fill="var(--c2)" fillOpacity={0.12} dot={{ r: 3 }} isAnimationActive={false} />
+          {b && <Line yAxisId="b" type="linear" dataKey="b" name={b} stroke="var(--c1)" strokeWidth={2} strokeDasharray="4 3" dot={{ r: 2 }} isAnimationActive={false} />}
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
