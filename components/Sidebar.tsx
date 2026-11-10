@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { SALES_REPORTS, ADMIN, FINANCE, OPS } from "@/lib/nav";
+import { SALES_REPORTS, ADMIN, FINANCE, OPS, MODULE_NAV } from "@/lib/nav";
 import { One365Logo, GrowPathMark } from "./Brand";
 
 export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolean; finance: boolean; appName: string }) {
@@ -41,6 +41,12 @@ export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolea
         <div className="grid gap-0.5">
           <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Finance</div>
           {FINANCE.map((r) => item(r.href, r.title))}
+        </div>
+      )}
+      {finance && (
+        <div className="grid gap-0.5">
+          <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Modules</div>
+          {MODULE_NAV.map((r) => item(r.href, r.title))}
         </div>
       )}
       {finance && (
