@@ -6,6 +6,7 @@ import { resetGl } from "@/lib/gl/sync";
 import { putSetting } from "@/lib/d365/config";
 import { sql } from "@/lib/db";
 import { loadSnapshot, migrate } from "@/lib/bootstrap";
+import { inventMovStatus, syncInventMonth } from "@/lib/d365/inventmov";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,6 +56,16 @@ export async function POST(req: Request) {
       await migrate();
       const entities = Array.isArray(b.entities) ? b.entities.map(String) : undefined;
       return NextResponse.json({ ok: true, loaded: await loadSnapshot(undefined, [company], entities) });
+    }
+    if (b.action === "inventMonth" || b.action === "inventStatus") {
+      // Inventory transactions (InventTransV5) one month per call: {company, month:'YYYY-MM' | 'before:YYYY-MM-DD'}.
+      const company = String(b.company || "").toLowerCase();
+      if (!/^[a-z0-9]{1,8}$/.test(company)) return NextResponse.json({ error: "Invalid company" }, { status: 400 });
+      if (b.action === "inventStatus") return NextResponse.json({ ok: true, status: await inventMovStatus(company) });
+      const month = String(b.month || "");
+      if (!/^(physical|\d{4}-\d{2}|before:\d{4}-\d{2}-\d{2})$/.test(month)) return NextResponse.json({ error: "Invalid month" }, { status: 400 });
+      await migrate();
+      return NextResponse.json({ ok: true, result: await syncInventMonth(company, month) });
     }
     if (b.action === "entity") {
       const company = String(b.company || "").toLowerCase();
