@@ -223,3 +223,21 @@ create table if not exists d365.invent_mov (
 );
 create index if not exists ix_invent_mov on d365.invent_mov (company, item, day);
 create table if not exists d365.invent_mov_runs ( company text not null, month text not null, rows int, trans int, at timestamptz default now(), primary key (company, month) );
+
+-- EE Cable Accessories requirements: vendor master, PO lines, item coverage (min/max, lead time), employee master.
+create table if not exists d365.vendors_m ( company text not null, vendor text not null, name text, search_name text, vendor_group text, currency text,
+  payment_terms text, country text, city text, phone text, email text, on_hold text, credit_limit numeric default 0, party_type text, tax_reg text, bank_account text,
+  primary key (company, vendor) );
+create table if not exists d365.purch_lines ( company text not null, purchase_order text not null, line numeric, item text, description text, category text,
+  qty numeric default 0, unit text, price numeric default 0, amount numeric default 0, status text, requisition text, requested date, confirmed date,
+  site text, warehouse text );
+create index if not exists ix_purch_lines on d365.purch_lines (company, purchase_order);
+create table if not exists d365.item_coverage ( company text not null, item text not null, site text, warehouse text, vendor text, min_qty numeric default 0,
+  max_qty numeric default 0, purch_lead int, prod_lead int, transfer_lead int, coverage_days int );
+alter table d365.workers add column if not exists legal_entity text;
+alter table d365.workers add column if not exists title text;
+alter table d365.workers add column if not exists start_date date;
+alter table d365.workers add column if not exists end_date date;
+alter table d365.workers add column if not exists termination_date date;
+alter table d365.workers add column if not exists termination_reason text;
+alter table d365.workers add column if not exists original_hire date;
