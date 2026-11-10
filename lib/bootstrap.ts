@@ -15,11 +15,11 @@ export async function migrate() {
 }
 
 /** Load snapshot/<company>/<EntitySet>.*.json (exported from D365) using the same mapping as the live sync. */
-export async function loadSnapshot(log: (m: string) => void = () => {}) {
+export async function loadSnapshot(log: (m: string) => void = () => {}, only?: string[]) {
   const root = join(process.cwd(), "snapshot");
   if (!existsSync(root)) throw new Error("No snapshot folder in this deployment.");
   const out: Record<string, number> = {};
-  for (const company of readdirSync(root)) {
+  for (const company of readdirSync(root).filter((c) => !only || only.includes(c))) {
     const dir = join(root, company);
     const [name, currency] = COMPANY_NAMES[company] ?? [company.toUpperCase(), null];
     await sql`insert into d365.companies ${sql({ company, name, currency })} on conflict (company) do update set name = excluded.name, currency = excluded.currency`;
