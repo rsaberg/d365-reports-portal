@@ -13,7 +13,7 @@ export const maxDuration = 300;
 
 /* Data sync driven by the browser, one entity per request, so a large environment never hits one request's time limit.
    POST {action:'start', dropSnapshot?}  → refresh legal entities, optionally remove the demo snapshot; returns the steps
-   POST {action:'entity', company, entity, full?} → sync one entity for one company
+   POST {action:'entity', company, entity, full?, period?:{from,to}} → sync one entity for one company (period: only that date range of transactions)
    POST {action:'snapshot', company, entities?} → (re)load the bundled export of one company without touching anything else
    POST {action:'clearAll', confirm:'DELETE', switchTo?, loadSnapshot?} → remove all synced data and the old connection (environment switch) */
 export async function POST(req: Request) {
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     if (b.action === "entity") {
       const company = String(b.company || "").toLowerCase();
       if (!/^[a-z0-9]{1,8}$/.test(company)) return NextResponse.json({ error: "Invalid company" }, { status: 400 });
-      return NextResponse.json({ ok: true, result: await syncEntity(company, String(b.entity), { full: !!b.full }) });
+      return NextResponse.json({ ok: true, result: await syncEntity(company, String(b.entity), { full: !!b.full, period: /^\d{4}-\d{2}-\d{2}$/.test(b.period?.from ?? "") && /^\d{4}-\d{2}-\d{2}$/.test(b.period?.to ?? "") ? { from: b.period.from, to: b.period.to } : undefined }) });
     }
     return NextResponse.json({ error: "unknown action" }, { status: 400 });
   } catch (e) {
