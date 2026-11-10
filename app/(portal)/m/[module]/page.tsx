@@ -5,20 +5,38 @@ import { ensureDemo } from "@/lib/reports/demo";
 import { Filters, Kpi, KpiRow, PageHead, Panel, Empty, Note } from "@/components/ui";
 import { BucketBars, PairBars, RankBars } from "@/components/charts";
 import DataTable from "@/components/DataTable";
+import { DASHBOARDS } from "@/lib/reports/dashboards";
+import { DashView } from "@/components/dash";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page({ params, searchParams }: { params: { module: string }; searchParams: Record<string, string> }) {
   const mod = moduleByKey(params.module);
-  if (!mod) notFound();
+  const dash = DASHBOARDS[params.module];
+  if (!mod && !dash) notFound();
   const s = await reportScope(searchParams);
   if (!s) return <Empty>Your account has no company access yet.</Empty>;
-  if (s.user.role === "sales" && mod.key !== "margin") return <Empty>This section is open to administrators and managers.</Empty>;
-  const rep = mod.reports.find((r) => r.key === one(searchParams.r)) ?? mod.reports[0];
-  if (rep.demo) await ensureDemo(s.company);
+  if (s.user.role === "sales" && params.module !== "margin") return <Empty>This section is open to administrators and managers.</Empty>;
   const t = today();
   const asOf = s.to < t ? s.to : t;
   const ctx: Ctx = { s, company: s.company, from: s.from, to: s.to, asOf, cur: s.mst || s.currency, q: searchParams };
+  const r = one(searchParams.r);
+  // A module opens on its dashboard; ?r=<report> opens one of its reports.
+  if (dash && (!mod || !r || r === "dashboard" || !mod.reports.some((x) => x.key === r))) {
+    if (dash.demo) await ensureDemo(s.company);
+    const spec = await dash.run(ctx);
+    return (
+      <>
+        <PageHead title={`${dash.title} Dashboard`} sub={<>{s.company.toUpperCase()} · {dash.sub} · {ctx.cur} · {s.from} – {s.to}</>} />
+        <Filters s={s} show={{ currency: false, group: false }} />
+        <DashView spec={spec} cur={ctx.cur} asOf={asOf} />
+        <p className="text-[12px] text-muted">Values in {ctx.cur} · Source: D365 {s.company.toUpperCase()} · balances as of {asOf}{dash.demo ? " · some figures use demo data until the custom D365 entities are synced" : ""}</p>
+      </>
+    );
+  }
+  if (!mod) notFound();
+  const rep = mod.reports.find((x) => x.key === r) ?? mod.reports[0];
+  if (rep.demo) await ensureDemo(s.company);
   const spec = await rep.run(ctx);
 
   return (
