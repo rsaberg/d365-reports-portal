@@ -2,23 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ledger-blue workbench: calm neutrals, one deep accent, semantic good/warn/bad reserved for state. */
+/* ONE365 identity: navy + Grow Path orange. Light = navy ink on cool paper; dark = ONE365 "Night Shift" (deep navy stage, orange + steel light). */
 :root {
-  --bg: 244 246 248; --surface: 255 255 255; --sunken: 236 240 244; --line: 219 225 232; --ink: 23 32 43; --muted: 94 107 122;
-  --accent: 15 92 140; --accent-ink: 255 255 255; --good: 30 127 79; --warn: 168 112 0; --bad: 180 68 47;
-  --nav: 16 33 48; --nav-ink: 214 225 235;
-  --c1: #2a78d6; --cprev: #86b6ef; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100; --c5: #e87ba4; --grid: #e1e0d9; --axis: #c3c2b7;
+  --bg: 243 245 250; --surface: 255 255 255; --sunken: 235 239 247; --line: 216 223 235; --ink: 11 31 75; --muted: 77 89 115;
+  --accent: 194 87 0; --accent-ink: 255 255 255; --good: 21 128 82; --warn: 166 105 0; --bad: 185 56 48;
+  --nav: 11 31 75; --nav-ink: 214 222 238;
+  --c1: #E26A00; --cprev: #9DB2DA; --c2: #1F4FA8; --c3: #1B9E77; --c4: #D99A00; --c5: #C2508A; --grid: #E4E8F0; --axis: #C6CEDD;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: 14 19 25; --surface: 22 29 37; --sunken: 28 36 46; --line: 42 52 64; --ink: 230 235 241; --muted: 151 163 177;
-    --accent: 111 179 224; --accent-ink: 12 20 28; --good: 108 203 152; --warn: 230 180 90; --bad: 240 138 115;
-    --nav: 10 15 20; --nav-ink: 190 204 218;
-    --c1: #3987e5; --cprev: #184f95; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --grid: #2c2c2a; --axis: #383835;
+    --bg: 5 9 20; --surface: 13 21 43; --sunken: 9 16 34; --line: 32 44 74; --ink: 238 242 251; --muted: 142 154 182;
+    --accent: 245 130 32; --accent-ink: 27 13 0; --good: 74 222 155; --warn: 251 191 90; --bad: 255 122 122;
+    --nav: 7 12 27; --nav-ink: 201 210 230;
+    --c1: #F58220; --cprev: #3F5FA8; --c2: #5B8CFF; --c3: #4ADE9B; --c4: #FBBF5A; --c5: #F07AB0; --grid: #1C2747; --axis: #2A3760;
     color-scheme: dark;
   }
+  /* the stage: two soft lights over deep navy */
+  body { background:
+    radial-gradient(900px 520px at 88% -8%, rgb(245 130 32 / .10), transparent 60%),
+    radial-gradient(800px 600px at -10% 110%, rgb(91 140 255 / .10), transparent 60%),
+    rgb(var(--bg)) fixed; }
+  .card, .d365 .pane { box-shadow: 0 1px 0 rgb(255 255 255 / .03) inset, 0 10px 30px -18px rgb(0 0 0 / .8); }
 }
 html, body { height: 100%; }
+.font-display { font-family: 'Readex Pro', 'IBM Plex Sans Arabic', system-ui, sans-serif; }
+h1, h2 { font-family: 'Readex Pro', 'IBM Plex Sans Arabic', system-ui, sans-serif; }
+/* login stage (always dark, like ONE365) */
+.stage { min-height: 100%; background: radial-gradient(900px 560px at 85% -10%, rgb(245 130 32 / .22), transparent 60%), radial-gradient(800px 640px at -10% 110%, rgb(91 140 255 / .18), transparent 60%), #050914; color: #EEF2FB; }
+.stage .glass { background: rgb(255 255 255 / .05); border: 1px solid rgb(255 255 255 / .10); border-radius: 18px; backdrop-filter: blur(14px); box-shadow: 0 30px 80px -30px rgb(0 0 0 / .9); }
+.stage .input { background: rgb(255 255 255 / .05); border-color: rgb(255 255 255 / .12); color: #EEF2FB; min-height: 44px; font-size: 14px; border-radius: 10px; }
+.stage .label { color: #9FB0CF; }
+.stage .btn-primary { background: linear-gradient(180deg, #FF9E45, #F58220); color: #1B0D00; border: 0; min-height: 46px; border-radius: 10px; font-size: 14.5px; }
 body { background: rgb(var(--bg)); color: rgb(var(--ink)); font-feature-settings: "tnum" 1; }
 .num { font-family: 'IBM Plex Mono', ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; }
 .link { color: rgb(var(--accent)); } .link:hover { text-decoration: underline; }
@@ -28,7 +42,7 @@ body { background: rgb(var(--bg)); color: rgb(var(--ink)); font-feature-settings
 .input:focus-visible, .btn:focus-visible, a:focus-visible, button:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 1px; }
 .btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-weight: 500; min-height: 34px; border: 1px solid rgb(var(--line)); background: rgb(var(--surface)); color: rgb(var(--ink)); }
 .btn:hover { background: rgb(var(--sunken)); }
-.btn-primary { background: rgb(var(--accent)); color: rgb(var(--accent-ink)); border-color: rgb(var(--accent)); }
+.btn-primary { background: linear-gradient(180deg, rgb(var(--accent)), rgb(var(--accent) / .88)); color: rgb(var(--accent-ink)); border-color: rgb(var(--accent)); font-weight: 600; }
 .btn-primary:hover { filter: brightness(1.08); background: rgb(var(--accent)); }
 table.dtable { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.dtable th { text-align: left; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: rgb(var(--muted)); font-weight: 600; background: rgb(var(--sunken)); padding: 8px 10px; white-space: nowrap; position: sticky; top: 0; }
