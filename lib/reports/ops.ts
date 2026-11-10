@@ -44,13 +44,14 @@ async function salesOrders(company: string) {
 }
 
 export async function documentTypes(company: string): Promise<DocType[]> {
-  const [so, po, prod, tos, jr] = await Promise.all([
-    salesOrders(company),
-    sql<{ status: number; approval: number; n: number }[]>`select status, approval, count(*)::int n from d365.purch_orders where company = ${company} group by 1,2`,
-    sql<{ status: number; n: number }[]>`select status, count(*)::int n from d365.prod_orders where company = ${company} group by 1`,
-    sql<{ status: number; n: number }[]>`select status, count(*)::int n from d365.transfer_orders where company = ${company} group by 1`,
-    journalSummary(company),
-  ]);
+  // One query at a time: keeps this page to a single pooled connection.
+  const so = await salesOrders(company);
+  const [po, prod, tos, jr] = [
+    await sql<{ status: number; approval: number; n: number }[]>`select status, approval, count(*)::int n from d365.purch_orders where company = ${company} group by 1,2`,
+    await sql<{ status: number; n: number }[]>`select status, count(*)::int n from d365.prod_orders where company = ${company} group by 1`,
+    await sql<{ status: number; n: number }[]>`select status, count(*)::int n from d365.transfer_orders where company = ${company} group by 1`,
+    await journalSummary(company),
+  ] as const;
   const out: DocType[] = [];
 
   // Sales orders: created → confirmed → picked → delivered → invoiced
