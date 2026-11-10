@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { SALES_REPORTS, ADMIN, FINANCE } from "@/lib/nav";
+import { SALES_REPORTS, ADMIN, FINANCE, OPS } from "@/lib/nav";
 import { One365Logo, GrowPathMark } from "./Brand";
 
 export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolean; finance: boolean; appName: string }) {
@@ -18,7 +18,7 @@ export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolea
   };
   const item = (href: string, title: string, withQ = true) => {
     const q = qFor(href.startsWith("/finance"));
-    const active = href === "/" ? path === "/" : href === "/finance" ? path === "/finance" : path.startsWith(href);
+    const active = href === "/" || href === "/finance" || href === "/ops" ? path === href : path.startsWith(href);
     return (
       <Link key={href} href={href + (withQ ? q : "")} aria-current={active ? "page" : undefined}
         className={`block rounded-md px-3 py-1.5 text-[13px] border-s-2 ${active ? "bg-white/10 text-white font-medium border-[#F58220]" : "border-transparent text-nav-ink/80 hover:bg-white/5 hover:text-white"}`}>
@@ -41,6 +41,12 @@ export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolea
         <div className="grid gap-0.5">
           <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Finance</div>
           {FINANCE.map((r) => item(r.href, r.title))}
+        </div>
+      )}
+      {finance && (
+        <div className="grid gap-0.5">
+          <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Operations</div>
+          {OPS.map((r) => item(r.href, r.title))}
         </div>
       )}
       {isAdmin && (
