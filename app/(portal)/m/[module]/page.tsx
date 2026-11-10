@@ -9,11 +9,12 @@ import { DASHBOARDS } from "@/lib/reports/dashboards";
 import { DashView } from "@/components/dash";
 import { EXTRA_DASHBOARDS, EXTRA_MODULES } from "@/lib/reports/costsec";
 import { STOCK_REPORTS, type OptionSpec } from "@/lib/reports/stock";
+import { EE_MODULE } from "@/lib/reports/ee";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page({ params, searchParams }: { params: { module: string }; searchParams: Record<string, string> }) {
-  const base = moduleByKey(params.module) ?? EXTRA_MODULES.find((m) => m.key === params.module);
+  const base = moduleByKey(params.module) ?? [...EXTRA_MODULES, EE_MODULE].find((m) => m.key === params.module);
   // Inventory gets the D365 movement and aging reports (lib/reports/stock.ts) in front of its other reports.
   const mod = base?.key === "inventory" ? { ...base, reports: [...STOCK_REPORTS, ...base.reports] } : base;
   const dash = DASHBOARDS[params.module] ?? EXTRA_DASHBOARDS[params.module];
