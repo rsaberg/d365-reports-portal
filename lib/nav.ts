@@ -4,6 +4,7 @@ export const SALES_REPORTS = [
   { href: "/sales/open-orders", title: "Open Sales Orders", desc: "Backlog by ship date, late lines, stock cover" },
   { href: "/sales/aging", title: "Customer Aging", desc: "Open receivables by days past due" },
   { href: "/sales/statement", title: "Statement & Collections", desc: "Opening, invoiced, collected, closing per customer" },
+  { href: "/sales/payments", title: "Invoice Payment Status", desc: "Paid, unpaid, remaining amount and days per invoice" },
   { href: "/sales/salesperson", title: "Sales by Salesperson", desc: "Actual vs target per salesperson" },
   { href: "/sales/discounts", title: "Discount Analysis", desc: "Discounts by customer, item and price variance" },
   { href: "/sales/returns", title: "Returns", desc: "Return orders, reasons and dispositions" },
@@ -27,4 +28,10 @@ export const FINANCE = [
   { href: "/finance/ratios", title: "Financial ratios" },
   { href: "/finance/budget", title: "Budget vs actual" },
   { href: "/finance/vouchers", title: "Voucher search" },
+];
+export const OPS = [
+  { href: "/ops", title: "Transaction tracking" },
+  { href: "/ops/documents", title: "Document lifecycle" },
+  { href: "/ops/users", title: "User activity" },
+  { href: "/ops/expected", title: "Expected vs entered" },
 ];
