@@ -4,6 +4,7 @@ import { inRole, isPL } from "@/lib/gl/structure";
 import { FinHead, NoFinance } from "@/components/FinShell";
 import { Kpi, KpiRow, Panel } from "@/components/ui";
 import { MonthlyCompare } from "@/components/charts";
+import { Card, TILE_COLORS, Tile, short } from "@/components/dash";
 import { money, pctFmt } from "@/lib/format";
 import { FINANCE } from "@/lib/nav";
 
@@ -27,24 +28,25 @@ export default async function FinanceOverview({ searchParams }: { searchParams: 
   const c = f.currency;
   const vs = `vs ${rangeLabel(cf[0], cf[1])}`;
   const qs = finQs(f);
+  const vsShort = f.compare === "pp" ? "vs previous period" : "vs last year";
   return (
     <>
-      <FinHead f={f} title="Financial overview" compares={COMPARES} />
-      <KpiRow>
-        <Kpi label="Revenue" value={money(a.revenue, c)} note={`${pctFmt(ch(a.revenue, b.revenue))} ${vs}`} tone={tone(ch(a.revenue, b.revenue))} href={`/finance/income?${qs}`} />
-        <Kpi label="Gross profit" value={money(a.gp, c)} note={`margin ${a.revenue ? ((a.gp / a.revenue) * 100).toFixed(1) : "–"}% (was ${b.revenue ? ((b.gp / b.revenue) * 100).toFixed(1) : "–"}%)`} tone={tone(a.revenue && b.revenue ? a.gp / a.revenue - b.gp / b.revenue : null)} href={`/finance/income?${qs}`} />
-        <Kpi label="Net profit" value={money(a.np, c)} note={`${pctFmt(ch(a.np, b.np))} ${vs}`} tone={tone(a.np - b.np)} href={`/finance/income?${qs}`} />
-        <Kpi label="Total assets" value={money(a.assets, c)} note={`${pctFmt(ch(a.assets, b.assets))} vs then`} href={`/finance/balance?${qs}`} />
-        <Kpi label="Equity" value={money(a.equity, c)} note={`${pctFmt(ch(a.equity, b.equity))} vs then`} tone={tone(a.equity - b.equity)} href={`/finance/balance?${qs}`} />
-        <Kpi label="Cash and banks" value={money(a.cash, c)} note={`${pctFmt(ch(a.cash, b.cash))} vs then`} tone={tone(a.cash - b.cash)} href={`/finance/cashflow?${qs}`} />
-      </KpiRow>
+      <FinHead f={f} title="Finance Dashboard" compares={COMPARES} />
+      <section className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
+        <Tile label="Revenue" value={short(a.revenue)} unit={c} change={ch(a.revenue, b.revenue)} vs={vsShort} color={TILE_COLORS[0]} icon="money" href={`/finance/income?${qs}`} />
+        <Tile label="Gross profit" value={short(a.gp)} unit={c} change={ch(a.gp, b.gp)} vs={vsShort} color={TILE_COLORS[1]} icon="profit" href={`/finance/income?${qs}`} />
+        <Tile label="Net profit" value={short(a.np)} unit={c} change={ch(a.np, b.np)} vs={vsShort} color={TILE_COLORS[2]} icon="pie" href={`/finance/income?${qs}`} />
+        <Tile label="Total assets" value={short(a.assets)} unit={c} change={ch(a.assets, b.assets)} vs={vsShort} color={TILE_COLORS[3]} icon="box" href={`/finance/balance?${qs}`} />
+        <Tile label="Equity" value={short(a.equity)} unit={c} change={ch(a.equity, b.equity)} vs={vsShort} color={TILE_COLORS[4]} icon="tag" href={`/finance/balance?${qs}`} />
+        <Tile label="Cash and banks" value={short(a.cash)} unit={c} change={ch(a.cash, b.cash)} vs={vsShort} color={TILE_COLORS[5]} icon="bank" href={`/finance/cashflow?${qs}`} />
+      </section>
       <div className="grid xl:grid-cols-2 gap-4 mb-4">
-        <Panel title="Revenue by month" sub={`${c} · vs same month last year`}><MonthlyCompare data={revData} cur={c} /></Panel>
-        <Panel title="Net profit by month" sub={`${c} · vs same month last year`}><MonthlyCompare data={npData} cur={c} /></Panel>
+        <Card title="Revenue by month"><MonthlyCompare data={revData} cur={c} /></Card>
+        <Card title="Net profit by month"><MonthlyCompare data={npData} cur={c} /></Card>
       </div>
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
         {cur.groups.map((g, gi) => (
-          <Panel key={g.name} title={g.name}>
+          <Card key={g.name} title={g.name}>
             <ul className="grid gap-1.5 text-[13px]">
               {g.items.slice(0, 4).map((it, i) => {
                 const p = prev.groups[gi].items[i].v;
@@ -52,7 +54,7 @@ export default async function FinanceOverview({ searchParams }: { searchParams: 
                 return <li key={it.k} className="flex justify-between gap-2"><span className="text-muted">{it.k}</span><span className="num">{fm(it.v)} <span className="text-muted text-[11px]">({fm(p)})</span></span></li>;
               })}
             </ul>
-          </Panel>
+          </Card>
         ))}
       </div>
       <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2">
