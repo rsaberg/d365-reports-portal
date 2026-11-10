@@ -46,7 +46,9 @@ export const ENTITIES: EntityDef[] = [
   },
   {
     entitySet: "EmployeesV2", table: "d365.workers", mode: "full", global: true,
-    map: { PersonnelNumber: ["personnel_number", "text"], Name: ["name", "text"] },
+    map: { PersonnelNumber: ["personnel_number", "text"], Name: ["name", "text"], EmploymentLegalEntityId: ["legal_entity", "text"], TitleId: ["title", "text"],
+      EmploymentStartDate: ["start_date", "date"], EmploymentEndDate: ["end_date", "date"], TerminationDate: ["termination_date", "date"],
+      TerminationReasonCodeId: ["termination_reason", "text"], OriginalHireDateTime: ["original_hire", "date"] },
   },
   {
     entitySet: "SalesInvoiceHeadersV4", periodField: "InvoiceDate", table: "d365.invoice_headers", mode: "window", dateField: "InvoiceDate",
@@ -185,6 +187,26 @@ export const ENTITIES: EntityDef[] = [
   {
     entitySet: "ReleasedProductsV2", table: "d365.products", mode: "full",
     map: { ItemNumber: ["item", "text"], SearchName: ["name", "text"], ProductGroupId: ["item_group", "text"], InventoryUnitSymbol: ["unit", "text"], ItemModelGroupId: ["model_group", "text"] },
+  },
+  {
+    entitySet: "VendorsV2", table: "d365.vendors_m", mode: "full",
+    map: { VendorAccountNumber: ["vendor", "text"], VendorOrganizationName: ["name", "text"], VendorSearchName: ["search_name", "text"], VendorGroupId: ["vendor_group", "text"],
+      CurrencyCode: ["currency", "text"], DefaultPaymentTermsName: ["payment_terms", "text"], AddressCountryRegionId: ["country", "text"], AddressCity: ["city", "text"],
+      PrimaryPhoneNumber: ["phone", "text"], PrimaryEmailAddress: ["email", "text"], OnHoldStatus: ["on_hold", "text"], CreditLimit: ["credit_limit", "num"],
+      VendorPartyType: ["party_type", "text"], ForeignVendorTaxRegistrationId: ["tax_reg", "text"], BankAccountId: ["bank_account", "text"] },
+  },
+  {
+    entitySet: "PurchaseOrderLinesV2", periodField: "RequestedDeliveryDate", table: "d365.purch_lines", mode: "full",
+    map: { PurchaseOrderNumber: ["purchase_order", "text"], LineNumber: ["line", "num"], ItemNumber: ["item", "text"], LineDescription: ["description", "text"],
+      ProcurementProductCategoryName: ["category", "text"], OrderedPurchaseQuantity: ["qty", "num"], PurchaseUnitSymbol: ["unit", "text"], PurchasePrice: ["price", "num"],
+      LineAmount: ["amount", "num"], PurchaseOrderLineStatus: ["status", "text"], PurchaseRequisitionId: ["requisition", "text"],
+      RequestedDeliveryDate: ["requested", "date"], ConfirmedDeliveryDate: ["confirmed", "date"], ReceivingSiteId: ["site", "text"], ReceivingWarehouseId: ["warehouse", "text"] },
+  },
+  {
+    entitySet: "ItemCoverageSettings", table: "d365.item_coverage", mode: "full",
+    map: { ItemNumber: ["item", "text"], CoverageSiteId: ["site", "text"], CoverageWarehouseId: ["warehouse", "text"], VendorAccountNumber: ["vendor", "text"],
+      MinimumOnHandInventoryQuantity: ["min_qty", "num"], MaximumOnHandInventoryQuantity: ["max_qty", "num"], ProcurementLeadTimeDays: ["purch_lead", "int"],
+      ProductionLeadTimeDays: ["prod_lead", "int"], TransferLeadTimeDays: ["transfer_lead", "int"], CoveragePeriodDays: ["coverage_days", "int"] },
   },
   {
     entitySet: "SystemUsers", table: "d365.sec_users", mode: "full", global: true, replaceAll: true,
