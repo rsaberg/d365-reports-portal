@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { SALES_REPORTS, ADMIN, FINANCE } from "@/lib/nav";
+import { One365Logo, GrowPathMark } from "./Brand";
 
 export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolean; finance: boolean; appName: string }) {
   const path = usePathname();
@@ -20,16 +21,16 @@ export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolea
     const active = href === "/" ? path === "/" : href === "/finance" ? path === "/finance" : path.startsWith(href);
     return (
       <Link key={href} href={href + (withQ ? q : "")} aria-current={active ? "page" : undefined}
-        className={`block rounded-md px-3 py-1.5 text-[13px] ${active ? "bg-white/10 text-white font-medium" : "text-nav-ink/80 hover:bg-white/5 hover:text-white"}`}>
+        className={`block rounded-md px-3 py-1.5 text-[13px] border-s-2 ${active ? "bg-white/10 text-white font-medium border-[#F58220]" : "border-transparent text-nav-ink/80 hover:bg-white/5 hover:text-white"}`}>
         {title}
       </Link>
     );
   };
   return (
     <nav className="h-full flex flex-col gap-5 p-3 bg-nav text-nav-ink overflow-y-auto">
-      <div className="px-3 pt-2">
-        <div className="text-[10.5px] tracking-[.08em] uppercase text-nav-ink/60 font-semibold">D365 F&amp;O</div>
-        <div className="text-white font-semibold leading-tight mt-0.5">{appName}</div>
+      <div className="px-2 pt-2" title={appName}>
+        <One365Logo size={30} onDark />
+        <div className="text-[10.5px] tracking-[.08em] uppercase text-nav-ink/55 font-semibold mt-2 ps-0.5">Dynamics 365 F&amp;O</div>
       </div>
       <div className="grid gap-0.5">{item("/", "Sales dashboard")}</div>
       <div className="grid gap-0.5">
@@ -48,6 +49,10 @@ export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolea
           {ADMIN.map((r) => item(r.href, r.title, false))}
         </div>
       )}
+      <div className="mt-auto px-3 pt-4 pb-2 border-t border-white/10 flex items-center justify-between gap-2">
+        <GrowPathMark />
+        <span className="text-[10px] text-nav-ink/50">by Grow Path</span>
+      </div>
     </nav>
   );
 }
