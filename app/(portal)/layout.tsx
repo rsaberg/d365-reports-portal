@@ -4,6 +4,8 @@ import { requireUser, logout } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import Sidebar from "@/components/Sidebar";
 import { One365Logo } from "@/components/Brand";
+import LangToggle from "@/components/LangToggle";
+import { cookies } from "next/headers";
 
 async function signOut() {
   "use server";
@@ -36,6 +38,7 @@ export default async function PortalLayout({ children }: { children: React.React
           </div>
           <div className="flex items-center gap-3 text-[13px]">
             <span><span className="font-medium">{user.name}</span> <span className="text-muted">· {user.role}</span></span>
+            <LangToggle lang={cookies().get("lang")?.value === "ar" ? "ar" : "en"} />
             <form action={signOut}><button className="btn">Sign out</button></form>
           </div>
         </header>
