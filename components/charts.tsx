@@ -1,5 +1,5 @@
 "use client";
-import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 const short = (n: number) => {
   const a = Math.abs(n);
@@ -96,6 +96,81 @@ export function PairBars({ data, a, b, cur }: { data: Record<string, any>[]; a: 
           <Bar dataKey={a.key} name={a.name} fill="var(--cprev)" radius={[4, 4, 0, 0]} maxBarSize={26} />
           <Bar dataKey={b.key} name={b.name} fill="var(--c1)" radius={[4, 4, 0, 0]} maxBarSize={26} />
         </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ Dashboard charts */
+export const PALETTE = ["var(--c2)", "var(--c1)", "var(--c3)", "var(--c4)", "var(--c5)", "#7C5CD6", "#2BA3B8", "#8A94A6"];
+
+/** Donut with the total in the middle and a legend with each slice's share. */
+export function Donut({ data, cur, center, centerLabel }: { data: { label: string; value: number }[]; cur?: string; center: string; centerLabel: string }) {
+  const total = data.reduce((a, d) => a + Math.max(0, d.value), 0);
+  const top = data.slice(0, 7);
+  const rest = data.slice(7).reduce((a, d) => a + d.value, 0);
+  const rows = rest > 0 ? [...top, { label: "Other", value: rest }] : top;
+  return (
+    <div className="grid grid-cols-[minmax(150px,190px)_1fr] items-center gap-3">
+      <div className="relative h-[190px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={rows} dataKey="value" nameKey="label" innerRadius="58%" outerRadius="95%" paddingAngle={1} stroke="none" isAnimationActive={false}>
+              {rows.map((d, i) => <Cell key={d.label} fill={PALETTE[i % PALETTE.length]} />)}
+            </Pie>
+            <Tooltip content={<Tip cur={cur} />} />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="absolute inset-0 grid place-content-center text-center pointer-events-none">
+          <div className="num font-semibold text-[17px] leading-tight">{center}</div>
+          <div className="text-[11px] text-muted">{centerLabel}</div>
+        </div>
+      </div>
+      <ul className="grid gap-1.5 text-[12.5px] min-w-0">
+        {rows.map((d, i) => (
+          <li key={d.label} className="flex items-center gap-2 min-w-0">
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: PALETTE[i % PALETTE.length] }} />
+            <span className="truncate">{d.label}</span>
+            <span className="num ml-auto ps-2 font-medium">{total ? ((d.value / total) * 100).toFixed(2) : "0.00"}%</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Sales (area, left axis) and order count (dashed line, right axis) by month. */
+export function SalesOrders({ data, cur }: { data: { m: string; sales: number; orders: number }[]; cur: string }) {
+  return (
+    <div className="h-[240px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
+          <CartesianGrid vertical={false} />
+          <XAxis dataKey="m" tickFormatter={monthLabel} tickLine={false} axisLine={{ stroke: "var(--axis)" }} interval="preserveStartEnd" />
+          <YAxis yAxisId="s" tickFormatter={short} tickLine={false} axisLine={false} width={48} />
+          <YAxis yAxisId="o" orientation="right" tickFormatter={short} tickLine={false} axisLine={false} width={36} />
+          <Tooltip content={<Tip labelFmt={monthLabel} />} />
+          <Legend iconType="plainline" iconSize={14} wrapperStyle={{ fontSize: 12 }} />
+          <Area yAxisId="s" type="linear" dataKey="sales" name={`Sales (${cur})`} stroke="var(--c2)" strokeWidth={2} fill="var(--c2)" fillOpacity={0.12} dot={{ r: 3 }} isAnimationActive={false} />
+          <Line yAxisId="o" type="linear" dataKey="orders" name="Invoices" stroke="var(--c1)" strokeWidth={2} strokeDasharray="4 3" dot={{ r: 2 }} isAnimationActive={false} />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+/** One series as a line with its values in percent. */
+export function PctLine({ data, name }: { data: { m: string; v: number }[]; name: string }) {
+  return (
+    <div className="h-[170px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <CartesianGrid vertical={false} />
+          <XAxis dataKey="m" tickFormatter={monthLabel} tickLine={false} axisLine={{ stroke: "var(--axis)" }} interval="preserveStartEnd" />
+          <YAxis domain={[0, (m: number) => Math.max(m * 1.2, 0.01)]} tickFormatter={(v) => `${(v * 100).toFixed(1)}%`} tickLine={false} axisLine={false} width={48} />
+          <Tooltip formatter={(v: number) => `${(v * 100).toFixed(2)}%`} labelFormatter={monthLabel} />
+          <Line type="monotone" dataKey="v" name={name} stroke="var(--c5)" strokeWidth={2} dot={false} isAnimationActive={false} />
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );
