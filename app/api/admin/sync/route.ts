@@ -5,6 +5,7 @@ import { dropAllCompanies, dropCompanies, snapshotCompanies, syncCompanyList, sy
 import { resetGl } from "@/lib/gl/sync";
 import { putSetting } from "@/lib/d365/config";
 import { sql } from "@/lib/db";
+import { loadSnapshot } from "@/lib/bootstrap";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export const maxDuration = 300;
 /* Data sync driven by the browser, one entity per request, so a large environment never hits one request's time limit.
    POST {action:'start', dropSnapshot?}  → refresh legal entities, optionally remove the demo snapshot; returns the steps
    POST {action:'entity', company, entity, full?} → sync one entity for one company
-   POST {action:'clearAll', confirm:'DELETE'} → remove all synced data (environment switch) */
+   POST {action:'clearAll', confirm:'DELETE', switchTo?, loadSnapshot?} → remove all synced data and the old connection (environment switch) */
 export async function POST(req: Request) {
   const u = await currentUser();
   if (!u || u.role !== "admin") return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -31,14 +32,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, dropped, entities: ENTITIES.map((d) => ({ entity: d.entitySet, global: !!d.global })) });
     }
     if (b.action === "clearAll") {
-      // Switching D365 environment: remove all synced data, the general ledger copy and the statement layout. The connection stays.
+      // Switching D365 environment: remove all synced data, the general ledger copy and the statement layout.
       if (b.confirm !== "DELETE") return NextResponse.json({ error: "confirmation missing" }, { status: 400 });
       await dropAllCompanies();
       await resetGl();
       await sql`truncate gl.ledgers, gl.accounts, gl.periods, gl.budget`;
       await sql`refresh materialized view gl.mbal`;
       await putSetting("fs_structure", null);
-      return NextResponse.json({ ok: true });
+      // The old environment's connection and mappings go too; the new default company is kept so reports open on it.
+      const to = typeof b.switchTo === "string" && /^[a-z0-9]{1,8}$/i.test(b.switchTo) ? b.switchTo.toUpperCase() : "";
+      for (const k of ["d365_postman", "d365_postman_prev", "d365_map", "d365_entities"]) await putSetting(k, null);
+      await putSetting("d365", to ? { envUrl: "", tenantId: "", clientId: "", company: to } : null);
+      // Optional: load the bundled D365 export of that company so the reports work before the live connection is set.
+      const loaded = to && b.loadSnapshot ? await loadSnapshot(undefined, [to.toLowerCase()]) : null;
+      return NextResponse.json({ ok: true, loaded });
     }
     if (b.action === "entity") {
       const company = String(b.company || "").toLowerCase();
