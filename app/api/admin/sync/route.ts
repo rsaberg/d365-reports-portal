@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
 import { ENTITIES } from "@/lib/d365/entities";
-import { dropCompanies, snapshotCompanies, syncCompanyList, syncEntity } from "@/lib/d365/sync";
+import { dropAllCompanies, dropCompanies, snapshotCompanies, syncCompanyList, syncEntity } from "@/lib/d365/sync";
+import { resetGl } from "@/lib/gl/sync";
+import { putSetting } from "@/lib/d365/config";
+import { sql } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +12,8 @@ export const maxDuration = 300;
 
 /* Data sync driven by the browser, one entity per request, so a large environment never hits one request's time limit.
    POST {action:'start', dropSnapshot?}  → refresh legal entities, optionally remove the demo snapshot; returns the steps
-   POST {action:'entity', company, entity, full?} → sync one entity for one company */
+   POST {action:'entity', company, entity, full?} → sync one entity for one company
+   POST {action:'clearAll', confirm:'DELETE'} → remove all synced data (environment switch) */
 export async function POST(req: Request) {
   const u = await currentUser();
   if (!u || u.role !== "admin") return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -25,6 +29,16 @@ export async function POST(req: Request) {
         await syncCompanyList(); // keep the D365 list after the cleanup
       }
       return NextResponse.json({ ok: true, dropped, entities: ENTITIES.map((d) => ({ entity: d.entitySet, global: !!d.global })) });
+    }
+    if (b.action === "clearAll") {
+      // Switching D365 environment: remove all synced data, the general ledger copy and the statement layout. The connection stays.
+      if (b.confirm !== "DELETE") return NextResponse.json({ error: "confirmation missing" }, { status: 400 });
+      await dropAllCompanies();
+      await resetGl();
+      await sql`truncate gl.ledgers, gl.accounts, gl.periods, gl.budget`;
+      await sql`refresh materialized view gl.mbal`;
+      await putSetting("fs_structure", null);
+      return NextResponse.json({ ok: true });
     }
     if (b.action === "entity") {
       const company = String(b.company || "").toLowerCase();
