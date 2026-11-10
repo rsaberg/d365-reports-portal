@@ -4,6 +4,7 @@ import { d365Config } from "@/lib/d365/config";
 import { defaultCompanies, snapshotCompanies, syncCompanyList } from "@/lib/d365/sync";
 import SyncRunner from "@/components/SyncRunner";
 import GlSyncRunner from "@/components/GlSyncRunner";
+import InventSyncRunner from "@/components/InventSyncRunner";
 import { ENTITIES } from "@/lib/d365/entities";
 import { PageHead, Panel, Pill, Note } from "@/components/ui";
 
@@ -60,6 +61,9 @@ export default async function Sync() {
           </div>
         </Panel>
       </div>
+      <Panel title="Inventory transactions" className="mt-4" sub="InventTransV5 · month by month">
+        <InventSyncRunner companies={live} configured={configured && !liveError} />
+      </Panel>
       <Panel title="General ledger (financial statements)" className="mt-4" sub="All companies · full history">
         <GlSyncRunner configured={configured && !liveError} />
       </Panel>
