@@ -53,6 +53,14 @@ export async function dropCompanies(companies: string[]) {
   });
 }
 
+/** Remove every company's synced data (all d365 tables, runs, user companies, targets) — used when switching environment. */
+export async function dropAllCompanies() {
+  const rows = await sql<{ company: string }[]>`
+    select company from d365.companies union select distinct company from d365.sync_runs where company is not null`;
+  await dropCompanies(rows.map((r) => r.company));
+  await sql`delete from d365.sync_runs`;
+}
+
 /** Sync one entity (by its default entity set name) for one company. */
 export async function syncEntity(company: string, defaultEntity: string, opts: { windowFrom?: string; full?: boolean } = {}): Promise<SyncResult> {
   const def = ENTITIES.find((d) => d.entitySet === defaultEntity);
