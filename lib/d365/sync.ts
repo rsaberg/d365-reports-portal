@@ -46,6 +46,8 @@ export async function dropCompanies(companies: string[]) {
       if (def.global) await tx`delete from ${tx(def.table)}`;
       else await tx`delete from ${tx(def.table)} where company in ${tx(companies)}`;
     }
+    await tx`delete from d365.invent_mov where company in ${tx(companies)}`;
+    await tx`delete from d365.invent_mov_runs where company in ${tx(companies)}`;
     await tx`delete from d365.sync_runs where company in ${tx(companies)}`;
     await tx`delete from portal.user_companies where company in ${tx(companies)}`;
     await tx`delete from portal.targets where company in ${tx(companies)}`;

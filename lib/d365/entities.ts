@@ -183,6 +183,10 @@ export const ENTITIES: EntityDef[] = [
   },
   // Security (global): users, roles and who has which role.
   {
+    entitySet: "ReleasedProductsV2", table: "d365.products", mode: "full",
+    map: { ItemNumber: ["item", "text"], SearchName: ["name", "text"], ProductGroupId: ["item_group", "text"], InventoryUnitSymbol: ["unit", "text"], ItemModelGroupId: ["model_group", "text"] },
+  },
+  {
     entitySet: "SystemUsers", table: "d365.sec_users", mode: "full", global: true, replaceAll: true,
     map: { UserID: ["user_id", "text"], UserName: ["name", "text"], Email: ["email", "text"], Enabled: ["enabled", "int", "NoYes"], Company: ["company_default", "text"] },
   },
