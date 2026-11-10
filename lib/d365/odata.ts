@@ -22,9 +22,14 @@ export async function readAll(entitySet: string, opts: { company: string | null;
   let url: string | null = `${base}/data/${entitySet}?${params.toString()}`;
   const out: Record<string, unknown>[] = [];
   while (url) {
-    const res: Response = await fetch(url, {
-      headers: { Authorization: `Bearer ${await d365Token(c)}`, Accept: "application/json", Prefer: "odata.maxpagesize=5000" },
-    });
+    // D365 throttles busy environments (429/503 with Retry-After): wait and retry a few times before failing.
+    let res: Response;
+    for (let attempt = 0; ; attempt++) {
+      res = await fetch(url, { headers: { Authorization: `Bearer ${await d365Token(c)}`, Accept: "application/json", Prefer: "odata.maxpagesize=5000" } });
+      if ((res.status !== 429 && res.status !== 503) || attempt >= 5) break;
+      const wait = Math.min(30, Number(res.headers.get("retry-after")) || 2 ** attempt * 2);
+      await new Promise((r) => setTimeout(r, wait * 1000));
+    }
     if (!res.ok) throw new Error(`${entitySet} (${opts.company}) failed ${res.status}: ${(await res.text()).slice(0, 500)}`);
     const j = (await res.json()) as { value: Record<string, unknown>[]; "@odata.nextLink"?: string };
     out.push(...j.value);
