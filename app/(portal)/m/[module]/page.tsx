@@ -7,16 +7,18 @@ import { BucketBars, PairBars, RankBars } from "@/components/charts";
 import DataTable from "@/components/DataTable";
 import { DASHBOARDS } from "@/lib/reports/dashboards";
 import { DashView } from "@/components/dash";
+import { EXTRA_DASHBOARDS, EXTRA_MODULES } from "@/lib/reports/costsec";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page({ params, searchParams }: { params: { module: string }; searchParams: Record<string, string> }) {
-  const mod = moduleByKey(params.module);
-  const dash = DASHBOARDS[params.module];
+  const mod = moduleByKey(params.module) ?? EXTRA_MODULES.find((m) => m.key === params.module);
+  const dash = DASHBOARDS[params.module] ?? EXTRA_DASHBOARDS[params.module];
   if (!mod && !dash) notFound();
   const s = await reportScope(searchParams);
   if (!s) return <Empty>Your account has no company access yet.</Empty>;
   if (s.user.role === "sales" && params.module !== "margin") return <Empty>This section is open to administrators and managers.</Empty>;
+  if (params.module === "security" && s.user.role !== "admin") return <Empty>User security is open to administrators.</Empty>;
   const t = today();
   const asOf = s.to < t ? s.to : t;
   const ctx: Ctx = { s, company: s.company, from: s.from, to: s.to, asOf, cur: s.mst || s.currency, q: searchParams };
