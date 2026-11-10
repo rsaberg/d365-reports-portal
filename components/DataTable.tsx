@@ -59,9 +59,9 @@ export default function DataTable({ cols, rows, total, maxHeight = 560, empty = 
     const v = r[c.key];
     const text = fmtVal(v, c.type);
     const tone = c.tone === "badIfPositive" && Number(v) > 0 ? "text-bad font-medium" : c.tone === "signed" ? (Number(v) < 0 ? "text-bad" : Number(v) > 0 ? "text-good" : "") : "";
-    const content = c.href ? (
-      <Link className="text-accent hover:underline" href={c.href.replace(/\{(\w+)\}/g, (_, k) => encodeURIComponent(r[k] ?? ""))}>{text}</Link>
-    ) : text;
+    // "@field" = the row carries the whole URL in that field (no link when it is empty).
+    const url = c.href ? (c.href.startsWith("@") ? String(r[c.href.slice(1)] ?? "") : c.href.replace(/\{(\w+)\}/g, (_, k) => encodeURIComponent(r[k] ?? ""))) : "";
+    const content = url ? <Link className="text-accent hover:underline" href={url}>{text}</Link> : text;
     return <td key={c.key} className={`${isNum(c.type) ? "r num" : ""} ${tone} ${c.wrap ? "!whitespace-normal" : ""}`}>{content}</td>;
   };
 
