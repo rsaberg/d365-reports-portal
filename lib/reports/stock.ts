@@ -23,8 +23,10 @@ const qs = (c: Ctx, extra: Record<string, string | undefined>) => {
 };
 
 async function loaded(c: Ctx) {
-  const [r] = await sql<{ n: number; first: string | null; last: string | null }[]>`select count(*)::int n, min(day)::text first, max(day)::text last from d365.invent_mov where company = ${c.company}`;
-  return r;
+  try {
+    const [r] = await sql<{ n: number; first: string | null; last: string | null }[]>`select count(*)::int n, min(day)::text first, max(day)::text last from d365.invent_mov where company = ${c.company}`;
+    return r;
+  } catch { return { n: 0, first: null, last: null }; } // table not created yet (first inventory load runs the migration)
 }
 const notLoaded = (): Spec => ({
   kpis: [{ label: "Inventory transactions", value: "Not loaded", tone: "warn" }],
