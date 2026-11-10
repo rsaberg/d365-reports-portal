@@ -36,15 +36,21 @@ export const OPS = [
   { href: "/ops/users", title: "User activity" },
   { href: "/ops/expected", title: "Expected vs entered" },
 ];
-/** Module menus: each module and the reports under it (keys match lib/reports/modules.ts). */
-export const MODULE_NAV: { href: string; title: string; items: [string, string][] }[] = [
-  { href: "/m/executive", title: "Executive overview", items: [["overview", "Overview"]] },
-  { href: "/m/receivables", title: "Receivables", items: [["overview", "Overview"], ["balances", "Customer balances"], ["overdue", "Overdue invoices"], ["credit", "Credit limit use"], ["payments", "Customer payments"]] },
-  { href: "/m/purchasing", title: "Purchasing", items: [["overview", "Overview"], ["open", "Open purchase orders"], ["register", "Purchase register"], ["price", "Purchase price history"], ["delivery", "Vendor delivery performance"], ["receipts", "Pending receipts"]] },
-  { href: "/m/payables", title: "Payables", items: [["aging", "Vendor aging"], ["statement", "Vendor statement"], ["due", "Payments due"], ["payments", "Vendor payments"]] },
-  { href: "/m/inventory", title: "Inventory", items: [["overview", "Overview"], ["onhand", "On-hand by site & warehouse"], ["valuation", "Inventory valuation"], ["movement", "Item movement"], ["slow", "Slow-moving & dead stock"], ["reorder", "Below reorder point"], ["turnover", "Inventory turnover"], ["batch", "Batch & expiry"]] },
-  { href: "/m/warehouse", title: "Warehouse", items: [["shipments", "Open shipments & picking"], ["receipts", "Receipts register"], ["transit", "Transfers in transit"]] },
-  { href: "/m/production", title: "Production", items: [["overview", "Overview"], ["status", "Production order status"], ["output", "Output vs plan"], ["material", "Material consumption vs BOM"], ["late", "Late production orders"]] },
-  { href: "/m/cash", title: "Cash & bank", items: [["balances", "Bank balances"], ["transactions", "Bank transactions"], ["forecast", "Cash forecast"]] },
-  { href: "/m/assets", title: "Fixed assets", items: [["register", "Fixed asset register"], ["depreciation", "Depreciation schedule"], ["movements", "Acquisitions & disposals"]] },
+type Item = { href: string; label: string };
+const mod = (key: string, items: [string, string][]): Item[] => [{ href: `/m/${key}`, label: "Dashboard" }, ...items.map(([r, label]) => ({ href: `/m/${key}?r=${r}`, label }))];
+/** The whole sidebar is modules: each one opens on its dashboard and lists its reports under it.
+ *  `managers` modules are hidden from the sales role. */
+export const NAV_MODULES: { key: string; title: string; managers?: boolean; items: Item[] }[] = [
+  { key: "executive", title: "Executive", managers: true, items: [{ href: "/m/executive", label: "Dashboard" }] },
+  { key: "sales", title: "Sales", items: [{ href: "/", label: "Dashboard" }, ...SALES_REPORTS.map((r) => ({ href: r.href, label: r.title }))] },
+  { key: "receivables", title: "Receivables", managers: true, items: mod("receivables", [["balances", "Customer balances"], ["overdue", "Overdue invoices"], ["credit", "Credit limit use"], ["payments", "Customer payments"]]) },
+  { key: "purchasing", title: "Purchasing", managers: true, items: mod("purchasing", [["open", "Open purchase orders"], ["register", "Purchase register"], ["price", "Purchase price history"], ["delivery", "Vendor delivery performance"], ["receipts", "Pending receipts"]]) },
+  { key: "payables", title: "Payables", managers: true, items: mod("payables", [["aging", "Vendor aging"], ["statement", "Vendor statement"], ["due", "Payments due"], ["payments", "Vendor payments"]]) },
+  { key: "inventory", title: "Inventory", managers: true, items: mod("inventory", [["onhand", "On-hand by site & warehouse"], ["valuation", "Inventory valuation"], ["movement", "Item movement"], ["slow", "Slow-moving & dead stock"], ["reorder", "Below reorder point"], ["turnover", "Inventory turnover"], ["batch", "Batch & expiry"]]) },
+  { key: "warehouse", title: "Warehouse", managers: true, items: mod("warehouse", [["shipments", "Open shipments & picking"], ["receipts", "Receipts register"], ["transit", "Transfers in transit"]]) },
+  { key: "production", title: "Production", managers: true, items: mod("production", [["status", "Production order status"], ["output", "Output vs plan"], ["material", "Material consumption vs BOM"], ["late", "Late production orders"]]) },
+  { key: "cash", title: "Cash & bank", managers: true, items: mod("cash", [["balances", "Bank balances"], ["transactions", "Bank transactions"], ["forecast", "Cash forecast"]]) },
+  { key: "assets", title: "Fixed assets", managers: true, items: mod("assets", [["register", "Fixed asset register"], ["depreciation", "Depreciation schedule"], ["movements", "Acquisitions & disposals"]]) },
+  { key: "finance", title: "Finance", managers: true, items: FINANCE.map((r, i) => ({ href: r.href, label: i === 0 ? "Dashboard" : r.title })) },
+  { key: "transactions", title: "Transactions", managers: true, items: [{ href: "/m/transactions", label: "Dashboard" }, ...OPS.map((r) => ({ href: r.href, label: r.title }))] },
 ];
