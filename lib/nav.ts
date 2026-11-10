@@ -37,6 +37,7 @@ export const OPS = [
   { href: "/ops/expected", title: "Expected vs entered" },
 ];
 type Item = { href: string; label: string };
+const eeItems = (items: [string, string][]): Item[] => [{ href: "/m/ee", label: "Requirements tracker" }, ...items.map(([r, label]) => ({ href: `/m/ee?r=${r}`, label }))];
 const mod = (key: string, items: [string, string][]): Item[] => [{ href: `/m/${key}`, label: "Dashboard" }, ...items.map(([r, label]) => ({ href: `/m/${key}?r=${r}`, label }))];
 /** The whole sidebar is modules: each one opens on its dashboard and lists its reports under it.
  *  `managers` modules are hidden from the sales role. */
@@ -54,5 +55,6 @@ export const NAV_MODULES: { key: string; title: string; managers?: boolean; admi
   { key: "assets", title: "Fixed assets", managers: true, items: mod("assets", [["register", "Fixed asset register"], ["depreciation", "Depreciation schedule"], ["movements", "Acquisitions & disposals"]]) },
   { key: "finance", title: "Finance", managers: true, items: FINANCE.map((r, i) => ({ href: r.href, label: i === 0 ? "Dashboard" : r.title })) },
   { key: "security", title: "User security", managers: true, admins: true, items: mod("security", [["users", "Users & roles"], ["roles", "Roles & members"], ["privileged", "Privileged access"], ["sod", "Segregation of duties"], ["licenses", "Licences"]]) },
+  { key: "ee", title: "EE Cable Accessories", managers: true, items: eeItems( [["vendors", "Vendor master file"], ["polog", "PR / PO log"], ["openpo", "Open POs not delivered"], ["coverage", "Min / max, safety stock & lead time"], ["hr", "Employees: master, hires, leavers"]]) },
   { key: "transactions", title: "Transactions", managers: true, items: [{ href: "/m/transactions", label: "Dashboard" }, ...OPS.map((r) => ({ href: r.href, label: r.title }))] },
 ];
