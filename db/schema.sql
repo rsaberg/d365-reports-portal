@@ -155,6 +155,42 @@ create table if not exists portal.expected_entries (
   unique (company, day, doc_type)
 );
 
+
+-- ---------- Demo data (light, generated in the portal) for modules whose D365 entities are custom ----------
+-- Replaced by synced D365 data once the custom entities exist. Every table is per company.
+create table if not exists d365.demo_items (
+  company text not null, item text not null, name text, item_group text, unit_cost numeric default 0, reorder_point numeric default 0,
+  safety_stock numeric default 0, batch_tracked boolean default false, primary key (company, item)
+);
+create table if not exists d365.demo_vendors (
+  company text not null, vendor text not null, name text, vend_group text, terms_days int default 30, primary key (company, vendor)
+);
+create table if not exists d365.demo_purch_lines (
+  company text not null, purchase_order text not null, line int not null, vendor text, item text, qty numeric, received_qty numeric default 0,
+  invoiced_qty numeric default 0, price numeric, order_date date, delivery_date date, received_date date, warehouse text, buyer text,
+  primary key (company, purchase_order, line)
+);
+create table if not exists d365.demo_vend_trans (
+  company text not null, id int not null, vendor text, voucher text, invoice text, trans_date date, due_date date, kind text,
+  amount numeric, settled numeric default 0, closed date, paym_mode text, purchase_order text, primary key (company, id)
+);
+create table if not exists d365.demo_invent_trans (
+  company text not null, id int not null, item text, site text, warehouse text, batch text, expiry date, trans_date date,
+  kind text, reference text, qty numeric, cost_amount numeric, primary key (company, id)
+);
+create table if not exists d365.demo_bank_trans (
+  company text not null, id int not null, account text, account_name text, trans_date date, kind text, description text,
+  amount numeric, primary key (company, id)
+);
+create table if not exists d365.demo_assets (
+  company text not null, asset text not null, name text, asset_group text, location text, acquisition_date date, cost numeric,
+  life_months int, salvage numeric default 0, disposal_date date, disposal_amount numeric, primary key (company, asset)
+);
+create table if not exists d365.demo_prod_output (
+  company text not null, prod_order text not null, qty_done numeric default 0, material_plan numeric default 0,
+  material_actual numeric default 0, finished_date date, primary key (company, prod_order)
+);
+
 -- ---------- Reporting views ----------
 create or replace view d365.v_sales as
 select l.*, h.customer, h.responsible, c.name as customer_name, c.cust_group, w.name as responsible_name
