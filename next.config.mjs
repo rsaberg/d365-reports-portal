@@ -3,7 +3,7 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["postgres", "exceljs", "bcryptjs"],
     // The setup route reads these files at runtime; make sure they ship with the function.
-    outputFileTracingIncludes: { "/api/setup": ["./db/**", "./snapshot/**"] },
+    outputFileTracingIncludes: { "/api/setup": ["./db/**", "./snapshot/**"], "/api/admin/sync": ["./snapshot/**"] },
   },
 };
 export default nextConfig;
