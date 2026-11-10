@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requireUser, logout } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import Sidebar from "@/components/Sidebar";
+import { One365Logo } from "@/components/Brand";
 
 async function signOut() {
   "use server";
@@ -13,7 +14,7 @@ async function signOut() {
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   const [last] = await sql<{ finished_at: Date; source: string }[]>`select finished_at, source from d365.sync_runs where status = 'ok' order by finished_at desc limit 1`;
-  const appName = process.env.APP_NAME ?? "D365 Reports Portal";
+  const appName = "ONE365 Reports";
   return (
     <div className="min-h-full lg:grid lg:grid-cols-[232px_1fr]">
       <aside className="hidden lg:block bg-nav">
@@ -29,6 +30,7 @@ export default async function PortalLayout({ children }: { children: React.React
               <Suspense><Sidebar isAdmin={user.role === "admin"} finance={user.role !== "sales"} appName={appName} /></Suspense>
             </div>
           </details>
+          <span className="lg:hidden"><One365Logo size={26} /></span>
           <div className="text-[12px] text-muted">
             {last ? <>Data from D365 · last refreshed {last.finished_at.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Cairo" })}{last.source === "snapshot" ? " (snapshot)" : ""}</> : "No data loaded yet"}
           </div>
