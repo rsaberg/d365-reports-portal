@@ -208,3 +208,9 @@ begin
     revoke all on all tables in schema d365, portal from anon, authenticated;
   end if;
 end $$;
+
+-- Security (global): D365 users, roles and role assignments
+create table if not exists d365.sec_users ( user_id text primary key, name text, email text, enabled int default 1, company_default text );
+create table if not exists d365.sec_roles ( role text primary key, name text, description text, license text );
+create table if not exists d365.sec_user_roles ( user_id text not null, role text not null, role_name text, status text, mode text );
+create index if not exists sec_user_roles_user on d365.sec_user_roles (user_id);
