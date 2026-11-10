@@ -10,7 +10,10 @@ export default function SyncRunner({ companies, checked, snapshot, configured }:
   const router = useRouter();
   const [pick, setPick] = useState<string[]>(checked);
   const [full, setFull] = useState(false);
-  const [drop, setDrop] = useState(snapshot.length > 0);
+  const [drop, setDrop] = useState(false);
+  const [limit, setLimit] = useState(false);
+  const [pFrom, setPFrom] = useState("2026-09-01");
+  const [pTo, setPTo] = useState("2026-10-31");
   const [steps, setSteps] = useState<Step[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok?: string; err?: string }>({});
@@ -39,7 +42,7 @@ export default function SyncRunner({ companies, checked, snapshot, configured }:
       for (let i = 0; i < plan.length; i++) {
         setSteps((s) => s.map((x, k) => (k === i ? { ...x, status: "run" } : x)));
         let res: { rows: number; error?: string; entity: string };
-        try { res = (await post({ action: "entity", company: plan[i].company, entity: plan[i].entity, full })).result; }
+        try { res = (await post({ action: "entity", company: plan[i].company, entity: plan[i].entity, full, period: limit ? { from: pFrom, to: pTo } : undefined })).result; }
         catch (e) { res = { rows: 0, entity: plan[i].entity, error: e instanceof Error ? e.message : String(e) }; }
         if (res.error) errors++;
         setSteps((s) => s.map((x, k) => (k === i ? { ...x, entity: res.entity, status: res.error ? "error" : "ok", rows: res.rows, error: res.error } : x)));
@@ -66,6 +69,16 @@ export default function SyncRunner({ companies, checked, snapshot, configured }:
         ))}
       </fieldset>
       <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" checked={full} disabled={busy} onChange={(e) => setFull(e.target.checked)} /> Full reload of invoice history (slower)</label>
+      <div className="grid gap-1.5">
+        <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" checked={limit} disabled={busy} onChange={(e) => setLimit(e.target.checked)} /> Load only a period of transactions</label>
+        {limit && (
+          <div className="flex flex-wrap items-center gap-2 text-[13px] ps-6">
+            <span className="text-muted">From</span><input type="date" className="input" value={pFrom} disabled={busy} onChange={(e) => setPFrom(e.target.value)} />
+            <span className="text-muted">to</span><input type="date" className="input" value={pTo} disabled={busy} onChange={(e) => setPTo(e.target.value)} />
+            <span className="text-[12px] text-muted w-full">Invoices, customer transactions, sales, purchase, production and transfer orders are read for this range only and replace the company&apos;s rows; customers, items, stock, journals and users load in full.</span>
+          </div>
+        )}
+      </div>
       {snapshot.length > 0 && (
         <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" checked={drop} disabled={busy} onChange={(e) => setDrop(e.target.checked)} />
           Remove the demo data ({snapshot.map((c) => c.toUpperCase()).join(", ")}) loaded from the snapshot</label>

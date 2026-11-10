@@ -79,7 +79,7 @@ export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolea
       </div>
       <div className="grid gap-0.5">
         <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Modules</div>
-        {NAV_MODULES.filter((m) => finance || !m.managers).map(moduleMenu)}
+        {NAV_MODULES.filter((m) => (finance || !m.managers) && (isAdmin || !m.admins)).map(moduleMenu)}
       </div>
       {isAdmin && (
         <div className="grid gap-0.5">
