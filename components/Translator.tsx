@@ -1,6 +1,8 @@
 "use client";
 import { useEffect } from "react";
-import AR from "@/lib/i18n/ar.json";
+import AR1 from "@/lib/i18n/ar.json";
+import AR2 from "@/lib/i18n/ar2.json";
+const AR: Record<string, string> = { ...AR1, ...AR2 };
 
 /* Arabic mode: translates the rendered page (text, placeholders, titles) from the English UI using the dictionary
    in lib/i18n/ar.json plus a few patterns for text with numbers. Charts and tables re-render, so a MutationObserver
@@ -21,6 +23,12 @@ const PATTERNS: [RegExp, (m: RegExpMatchArray) => string | null][] = [
   [/^(.+) \(([A-Z]{3})\)$/, (m) => (word(m[1]) ? `${word(m[1])} (${m[2]})` : null)],
   [/^(.+) \(top (\d+)\)$/i, (m) => `${word(m[1]) ?? m[1]} (أعلى ${m[2]})`],
   [/^As of (.+)$/, (m) => `في ${m[1]}`],
+  [/^(Opening|Closing) (\d{4}-\d{2}-\d{2})$/, (m) => `${m[1] === "Opening" ? "رصيد أول" : "رصيد آخر"} ${m[2]}`],
+  [/^Inventory value (\d{4}-\d{2}-\d{2})$/, (m) => `قيمة المخزون ${m[2] ?? m[1]}`],
+  [/^(0–30 days|31–60|61–90|91–180|181–365|Over 1 year) (qty|value)$/, (m) => `${({ "0–30 days": "0–30 يوم", "Over 1 year": "أكثر من سنة" } as Record<string, string>)[m[1]] ?? m[1]} ${m[2] === "qty" ? "كمية" : "قيمة"}`],
+  [/^([\d,]+) units$/, (m) => `${m[1]} وحدة`],
+  [/^Item (.+) by day with running balance$/, (m) => `الصنف ${m[1]} يومياً مع الرصيد المتحرك`],
+  [/^(Closing value by item group|Value by age) · (.+)$/, (m) => `${m[1].startsWith("Closing") ? "قيمة آخر المدة حسب مجموعة الصنف" : "القيمة حسب العمر"} · ${m[2]}`],
   [/^([\d,]+) rows · click a column to sort$/, (m) => `${m[1]} صف · اضغط على عمود للترتيب`],
   [/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{2,4})$/, (m) => `${MON[m[1]]} ${m[2]}`],
   [/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)$/, (m) => MON[m[1]]],
