@@ -26,6 +26,33 @@ export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolea
       </Link>
     );
   };
+  // A module is a collapsible menu; its reports are the items under it. The open module is the one being viewed.
+  const moduleMenu = (m: (typeof MODULE_NAV)[number]) => {
+    const here = path === m.href;
+    const cur = sp.get("r") ?? m.items[0][0];
+    const base = new URLSearchParams(qFor(false).slice(1));
+    if (m.items.length === 1) return item(m.href, m.title);
+    return (
+      <details key={m.href} open={here} className="group">
+        <summary className={`list-none cursor-pointer flex items-center justify-between rounded-md px-3 py-1.5 text-[13px] border-s-2 border-transparent [&::-webkit-details-marker]:hidden ${here ? "text-white font-medium" : "text-nav-ink/80 hover:bg-white/5 hover:text-white"}`}>
+          {m.title}
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" className="opacity-60 transition-transform group-open:rotate-90"><path d="M4 2l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+        </summary>
+        <div className="grid gap-0.5 ms-3 ps-1 border-s border-white/10 mt-0.5 mb-1">
+          {m.items.map(([k, label]) => {
+            const active = here && cur === k;
+            const q = new URLSearchParams(base); q.set("r", k);
+            return (
+              <Link key={k} href={`${m.href}?${q}`} aria-current={active ? "page" : undefined}
+                className={`block rounded-md px-3 py-1 text-[12.5px] border-s-2 ${active ? "bg-white/10 text-white font-medium border-[#F58220]" : "border-transparent text-nav-ink/70 hover:bg-white/5 hover:text-white"}`}>
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+      </details>
+    );
+  };
   return (
     <nav className="h-full flex flex-col gap-5 p-3 bg-nav text-nav-ink overflow-y-auto">
       <div className="px-2 pt-2" title={appName}>
@@ -46,7 +73,7 @@ export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolea
       {finance && (
         <div className="grid gap-0.5">
           <div className="px-3 pb-1 text-[10.5px] tracking-[.08em] uppercase text-nav-ink/50 font-semibold">Modules</div>
-          {MODULE_NAV.map((r) => item(r.href, r.title))}
+          {MODULE_NAV.map(moduleMenu)}
         </div>
       )}
       {finance && (
