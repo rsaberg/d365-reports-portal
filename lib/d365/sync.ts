@@ -62,7 +62,7 @@ export async function dropAllCompanies() {
 }
 
 /** Sync one entity (by its default entity set name) for one company. */
-export async function syncEntity(company: string, defaultEntity: string, opts: { windowFrom?: string; full?: boolean } = {}): Promise<SyncResult> {
+export async function syncEntity(company: string, defaultEntity: string, opts: { windowFrom?: string; full?: boolean; period?: { from: string; to: string } } = {}): Promise<SyncResult> {
   const def = ENTITIES.find((d) => d.entitySet === defaultEntity);
   if (!def) throw new Error("Unknown entity " + defaultEntity);
   const map = await getSetting<Record<string, string>>("d365_map");
@@ -70,9 +70,13 @@ export async function syncEntity(company: string, defaultEntity: string, opts: {
   const windowFrom = opts.full ? undefined : opts.windowFrom ?? `${new Date().getFullYear() - 1}-01-01`;
   const [run] = await sql<{ id: number }[]>`insert into d365.sync_runs (source, company, entity) values ('odata', ${company}, ${entitySet}) returning id`;
   try {
-    const filters = [def.filter, def.mode === "window" && windowFrom ? `${def.dateField} ge ${windowFrom}T00:00:00Z` : undefined].filter(Boolean).join(" and ");
+    // A period load (e.g. two months) reads only that range of transactional entities and replaces the company's rows; master data loads in full.
+    const p = opts.period;
+    const dateFilter = p && def.periodField ? `${def.periodField} ge ${p.from}T00:00:00Z and ${def.periodField} le ${p.to}T23:59:59Z`
+      : !p && def.mode === "window" && windowFrom ? `${def.dateField} ge ${windowFrom}T00:00:00Z` : undefined;
+    const filters = [def.filter, dateFilter].filter(Boolean).join(" and ");
     const records = await readAll(entitySet, { company: def.global ? null : company, select: Object.keys(def.map), filter: filters || undefined });
-    const n = await replaceRows(def, company, records, def.mode === "window" ? windowFrom : undefined);
+    const n = await replaceRows(def, company, records, !p && def.mode === "window" ? windowFrom : undefined);
     await sql`update d365.sync_runs set rows = ${n}, status = 'ok', finished_at = now() where id = ${run.id}`;
     return { company, entity: entitySet, rows: n };
   } catch (e) {
@@ -83,7 +87,7 @@ export async function syncEntity(company: string, defaultEntity: string, opts: {
 }
 
 /** Full run in one call (daily cron and the CLI script). */
-export async function runSync(opts: { companies?: string[]; windowFrom?: string; full?: boolean } = {}) {
+export async function runSync(opts: { companies?: string[]; windowFrom?: string; full?: boolean; period?: { from: string; to: string } } = {}) {
   await syncCompanyList();
   const companies = opts.companies?.length ? opts.companies : await defaultCompanies();
   if (!companies.length) throw new Error("No companies to sync. Set the company in D365 integration, or pick companies.");

@@ -20,13 +20,18 @@ export async function replaceRows(def: EntityDef, company: string, records: Reco
   const allCols = def.global ? cols : ["company", ...fixedCols, ...cols];
   // Entities sharing a table only replace their own rows (tagged by the fixed "source" column).
   const own = def.fixed?.source;
-  if (def.global) {
+  if (def.global && !def.replaceAll) {
     // A global entity read across companies can repeat the same record (e.g. one worker per legal entity): keep one per key.
     const seen = new Set<unknown>();
     rows = rows.filter((r) => r[cols[0]] != null && !seen.has(r[cols[0]]) && (seen.add(r[cols[0]]), true));
   }
 
   await sql.begin(async (tx) => {
+    if (def.global && def.replaceAll) {
+      await tx`delete from ${tx(def.table)}`;
+      for (let i = 0; i < rows.length; i += 500) await tx`insert into ${tx(def.table)} ${tx(rows.slice(i, i + 500), allCols)}`;
+      return;
+    }
     if (def.global) {
       // Global entity (no company column): replace by key, which is the first mapped column.
       const key = cols[0];

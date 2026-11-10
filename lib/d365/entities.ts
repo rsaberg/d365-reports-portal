@@ -21,6 +21,10 @@ export interface EntityDef {
   global?: boolean;
   /** Constant columns written on every row; several entities can then share one table (each replaces only its own rows). */
   fixed?: Record<string, string>;
+  /** Date field used when a sync is limited to a period (e.g. 2026-09-01..2026-10-31); master data has none and loads in full. */
+  periodField?: string;
+  /** Global entity replaced as a whole on every load (no single-column key, e.g. user-role assignments). */
+  replaceAll?: boolean;
 }
 
 /** Journal headers of every module, one table (d365.journals) tagged by source. */
@@ -45,7 +49,7 @@ export const ENTITIES: EntityDef[] = [
     map: { PersonnelNumber: ["personnel_number", "text"], Name: ["name", "text"] },
   },
   {
-    entitySet: "SalesInvoiceHeadersV4", table: "d365.invoice_headers", mode: "window", dateField: "InvoiceDate",
+    entitySet: "SalesInvoiceHeadersV4", periodField: "InvoiceDate", table: "d365.invoice_headers", mode: "window", dateField: "InvoiceDate",
     map: {
       InvoiceNumber: ["invoice", "text"], InvoiceDate: ["invoice_date", "date"], InvoiceCustomerAccountNumber: ["customer", "text"],
       SalesOrderNumber: ["sales_order", "text"], SalesOrderResponsiblePersonnelNumber: ["responsible", "text"],
@@ -55,7 +59,7 @@ export const ENTITIES: EntityDef[] = [
     },
   },
   {
-    entitySet: "SalesInvoiceV4Lines", table: "d365.invoice_lines", mode: "window", dateField: "InvoiceDate",
+    entitySet: "SalesInvoiceV4Lines", periodField: "InvoiceDate", table: "d365.invoice_lines", mode: "window", dateField: "InvoiceDate",
     map: {
       InvoiceNumber: ["invoice", "text"], InvoiceDate: ["invoice_date", "date"], LineCreationSequenceNumber: ["line_seq", "int"],
       ProductNumber: ["item", "text"], ProductName: ["item_name", "text"], SalesProductCategoryName: ["category", "text"],
@@ -66,7 +70,7 @@ export const ENTITIES: EntityDef[] = [
   },
   {
     // Full history: needed for opening balances and statements. Open items = Closed is empty.
-    entitySet: "CustTransactions", table: "d365.cust_trans", mode: "full",
+    entitySet: "CustTransactions", periodField: "TransDate", table: "d365.cust_trans", mode: "full",
     map: {
       SysRecId: ["rec_id", "int"], AccountNum: ["account", "text"], Voucher: ["voucher", "text"], Invoice: ["invoice", "text"],
       TransDate: ["trans_date", "date"], DueDate: ["due_date", "date"], DocumentDate: ["document_date", "date"],
@@ -91,7 +95,7 @@ export const ENTITIES: EntityDef[] = [
   },
   {
     // Headers of open orders (status Backorder = 1).
-    entitySet: "SalesOrderHeadersV4", table: "d365.order_headers", mode: "full",
+    entitySet: "SalesOrderHeadersV4", periodField: "OrderCreationDateTime", table: "d365.order_headers", mode: "full",
     filter: "SalesOrderStatus eq Microsoft.Dynamics.DataEntities.SalesStatus'Backorder'",
     map: {
       SalesOrderNumber: ["sales_order", "text"], OrderingCustomerAccountNumber: ["customer", "text"],
@@ -149,7 +153,7 @@ export const ENTITIES: EntityDef[] = [
   },
   {
     // Every sales order header (all statuses) for the transaction tracking reports.
-    entitySet: "SalesOrderHeadersV2", table: "d365.sales_orders", mode: "full",
+    entitySet: "SalesOrderHeadersV2", periodField: "OrderCreationDateTime", table: "d365.sales_orders", mode: "full",
     map: {
       SalesOrderNumber: ["sales_order", "text"], OrderCreationDateTime: ["created_at", "ts"], SalesOrderStatus: ["status", "int", "SalesStatus"],
       SalesOrderProcessingStatus: ["doc_status", "int", "SalesDocumentStatus"], OrderTakerPersonnelNumber: ["taker", "text"],
@@ -157,25 +161,38 @@ export const ENTITIES: EntityDef[] = [
     },
   },
   {
-    entitySet: "PurchaseOrderHeadersV2", table: "d365.purch_orders", mode: "full",
+    entitySet: "PurchaseOrderHeadersV2", periodField: "AccountingDate", table: "d365.purch_orders", mode: "full",
     map: {
       PurchaseOrderNumber: ["purchase_order", "text"], OrderVendorAccountNumber: ["vendor", "text"], PurchaseOrderStatus: ["status", "int", "PurchStatus"],
       DocumentApprovalStatus: ["approval", "int", "VersioningDocumentState"], AccountingDate: ["accounting_date", "date"], OrdererPersonnelNumber: ["orderer", "text"],
     },
   },
   {
-    entitySet: "ProductionOrderHeaders", table: "d365.prod_orders", mode: "full",
+    entitySet: "ProductionOrderHeaders", periodField: "DeliveryDate", table: "d365.prod_orders", mode: "full",
     map: {
       ProductionOrderNumber: ["prod_order", "text"], ItemNumber: ["item", "text"], ProductionOrderStatus: ["status", "int", "ProdStatus"],
       ScheduledQuantity: ["qty", "num"], DeliveryDate: ["delivery_date", "date"], ProductionWarehouseId: ["warehouse", "text"],
     },
   },
   {
-    entitySet: "TransferOrderHeaders", table: "d365.transfer_orders", mode: "full",
+    entitySet: "TransferOrderHeaders", periodField: "RequestedShippingDate", table: "d365.transfer_orders", mode: "full",
     map: {
       TransferOrderNumber: ["transfer_order", "text"], TransferOrderStatus: ["status", "int", "InventTransferStatus"],
       ShippingWarehouseId: ["from_wh", "text"], ReceivingWarehouseId: ["to_wh", "text"], RequestedShippingDate: ["ship_date", "date"],
     },
+  },
+  // Security (global): users, roles and who has which role.
+  {
+    entitySet: "SystemUsers", table: "d365.sec_users", mode: "full", global: true, replaceAll: true,
+    map: { UserID: ["user_id", "text"], UserName: ["name", "text"], Email: ["email", "text"], Enabled: ["enabled", "int", "NoYes"], Company: ["company_default", "text"] },
+  },
+  {
+    entitySet: "SecurityRoles", table: "d365.sec_roles", mode: "full", global: true, replaceAll: true,
+    map: { SecurityRoleIdentifier: ["role", "text"], SecurityRoleName: ["name", "text"], Description: ["description", "text"], UserLicenseType: ["license", "text"] },
+  },
+  {
+    entitySet: "SecurityUserRoles", table: "d365.sec_user_roles", mode: "full", global: true, replaceAll: true,
+    map: { UserId: ["user_id", "text"], SecurityRoleIdentifier: ["role", "text"], SecurityRoleName: ["role_name", "text"], AssignmentStatus: ["status", "text"], AssignmentMode: ["mode", "text"] },
   },
   journal("LedgerJournalHeaders", "General ledger", "General journal", "JournalBatchNumber", "JournalName", { JournalTotalDebit: ["amount", "num"] }),
   journal("CustomerPaymentJournalHeaders", "Accounts receivable", "Customer payment journal", "JournalBatchNumber", "JournalName"),
