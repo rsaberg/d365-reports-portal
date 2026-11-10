@@ -5,7 +5,7 @@ import { dropAllCompanies, dropCompanies, snapshotCompanies, syncCompanyList, sy
 import { resetGl } from "@/lib/gl/sync";
 import { putSetting } from "@/lib/d365/config";
 import { sql } from "@/lib/db";
-import { loadSnapshot } from "@/lib/bootstrap";
+import { loadSnapshot, migrate } from "@/lib/bootstrap";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +14,7 @@ export const maxDuration = 300;
 /* Data sync driven by the browser, one entity per request, so a large environment never hits one request's time limit.
    POST {action:'start', dropSnapshot?}  → refresh legal entities, optionally remove the demo snapshot; returns the steps
    POST {action:'entity', company, entity, full?} → sync one entity for one company
+   POST {action:'snapshot', company, entities?} → (re)load the bundled export of one company without touching anything else
    POST {action:'clearAll', confirm:'DELETE', switchTo?, loadSnapshot?} → remove all synced data and the old connection (environment switch) */
 export async function POST(req: Request) {
   const u = await currentUser();
@@ -46,6 +47,14 @@ export async function POST(req: Request) {
       // Optional: load the bundled D365 export of that company so the reports work before the live connection is set.
       const loaded = to && b.loadSnapshot ? await loadSnapshot(undefined, [to.toLowerCase()]) : null;
       return NextResponse.json({ ok: true, loaded });
+    }
+    if (b.action === "snapshot") {
+      // Load (or reload) the bundled D365 export of one company, optionally only some entities. Other data is untouched.
+      const company = String(b.company || "").toLowerCase();
+      if (!/^[a-z0-9]{1,8}$/.test(company)) return NextResponse.json({ error: "Invalid company" }, { status: 400 });
+      await migrate();
+      const entities = Array.isArray(b.entities) ? b.entities.map(String) : undefined;
+      return NextResponse.json({ ok: true, loaded: await loadSnapshot(undefined, [company], entities) });
     }
     if (b.action === "entity") {
       const company = String(b.company || "").toLowerCase();
