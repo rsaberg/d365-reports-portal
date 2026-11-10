@@ -6,83 +6,10 @@ import { pct } from "@/lib/reports/common";
 import { fmt, dateFmt } from "@/lib/format";
 import { Filters, PageHead, Empty } from "@/components/ui";
 import { Donut, PctLine, RankBars, SalesOrders } from "@/components/charts";
+import { BarRows, Card, P, Stat, Tile, short } from "@/components/dash";
 
 export const dynamic = "force-dynamic";
 
-const short = (n: number, c?: string) => {
-  const a = Math.abs(n);
-  const v = a >= 1e9 ? `${(n / 1e9).toFixed(2)}B` : a >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : a >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : n.toFixed(0);
-  return c ? `${c} ${v}` : v;
-};
-const P = (x: number | null, d = 1) => (x === null || !Number.isFinite(x) ? "–" : `${(x * 100).toFixed(d)}%`);
-
-/* Colored KPI tile with icon and change vs last year (as in the reference dashboard). */
-const ICONS: Record<string, React.ReactNode> = {
-  money: <><circle cx="12" cy="12" r="9" /><path d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.5 0-2.5.8-2.5 1.9 0 2.6 5 1.4 5 4.1 0 1.1-1.1 2-2.6 2-1.2 0-2.1-.5-2.6-1.3M12 6.5V8m0 8v1.5" /></>,
-  cart: <><path d="M3 4h2l2.2 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2" /><circle cx="9" cy="19" r="1.4" /><circle cx="17" cy="19" r="1.4" /></>,
-  profit: <><path d="M4 20V14M9 20V10M14 20V12M19 20V6" /><path d="M4 10l5-4 4 3 6-5" /></>,
-  pie: <><path d="M12 3v9h9a9 9 0 1 1-9-9z" /><path d="M15 3.5A9 9 0 0 1 20.5 9H15z" /></>,
-  tag: <><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z" /><circle cx="8" cy="8" r="1.5" /></>,
-  ret: <><path d="M9 14L4 9l5-5" /><path d="M4 9h10a6 6 0 0 1 0 12h-3" /></>,
-};
-function Tile({ label, value, unit, change, color, icon, href }: { label: string; value: string; unit?: string; change: number | null; color: string; icon: string; href?: string }) {
-  const up = (change ?? 0) >= 0;
-  const body = (
-    <div className="rounded-xl px-4 py-3.5 text-white h-full relative overflow-hidden shadow-sm" style={{ background: color }}>
-      <div className="text-[11.5px] font-semibold tracking-[.06em] uppercase opacity-90">{label}</div>
-      <div className="num text-[22px] font-bold leading-tight mt-1.5 pe-11 whitespace-nowrap">{unit && <span className="text-[13px] font-semibold opacity-85 me-1">{unit}</span>}{value}</div>
-      <div className="text-[12px] mt-1 opacity-95">
-        {change === null ? "No data last year" : <><span className="font-semibold">{up ? "▲" : "▼"} {P(Math.abs(change))}</span> <span className="opacity-80">vs previous year</span></>}
-      </div>
-      <svg viewBox="0 0 24 24" width="36" height="36" className="absolute right-3 top-1/2 -translate-y-1/2 opacity-90" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[icon]}</svg>
-    </div>
-  );
-  return href ? <Link href={href} className="block hover:brightness-105 transition">{body}</Link> : body;
-}
-
-function Card({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
-  return (
-    <section className="card p-4 min-w-0">
-      <div className="flex items-baseline justify-between gap-2 mb-3">
-        <h2 className="font-bold text-[13px] tracking-[.05em] uppercase">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
-  return (
-    <div className="rounded-lg border border-line bg-sunken/40 px-2 py-2 text-center min-w-0">
-      <div className="text-[11px] text-muted truncate">{label}</div>
-      <div className={`num font-bold text-[16px] mt-0.5 ${tone === "good" ? "text-good" : tone === "bad" ? "text-bad" : ""}`}>{value}</div>
-    </div>
-  );
-}
-/** Table rows with an inline proportional bar. */
-function BarRows({ rows, cols, cur }: { rows: { a: string; b?: string; value: number }[]; cols: [string, string?, string?]; cur: string }) {
-  const max = Math.max(1, ...rows.map((r) => r.value));
-  if (!rows.length) return <Empty>No sales.</Empty>;
-  return (
-    <table className="w-full text-[12.5px] table-fixed">
-      <thead><tr className="text-muted text-[11.5px]"><th className="text-left font-semibold pb-1.5">{cols[0]}</th>{cols[1] && <th className="text-left font-semibold pb-1.5 w-[28%]">{cols[1]}</th>}<th className="text-right font-semibold pb-1.5 w-[42%]">{cols[2] ?? `Sales (${cur})`}</th></tr></thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.a + (r.b ?? "")}>
-            <td className="py-1 pe-2 truncate" title={r.a}>{r.a}</td>
-            {cols[1] && <td className="py-1 pe-2 text-muted truncate" title={r.b}>{r.b}</td>}
-            <td className="py-1">
-              <div className="flex items-center gap-2">
-                <div className="h-2.5 rounded-sm flex-1 bg-sunken overflow-hidden"><div className="h-full rounded-sm" style={{ width: `${(r.value / max) * 100}%`, background: "var(--c2)" }} /></div>
-                <span className="num w-[58px] text-right">{short(r.value)}</span>
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
 
 export default async function Dashboard({ searchParams }: { searchParams: Record<string, string> }) {
   const user = await requireUser();
