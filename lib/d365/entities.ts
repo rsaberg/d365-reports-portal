@@ -3,8 +3,9 @@
  * Field names were verified against the live environment's $metadata.
  * The same definitions drive the live OData sync and the snapshot loader, so both write identical rows.
  */
-export type ColType = "text" | "date" | "num" | "int";
-export type EnumName = "SalesStatus" | "SalesQuotationStatus" | "ReturnStatusHeader" | "LedgerTransType";
+export type ColType = "text" | "date" | "num" | "int" | "ts";
+export type EnumName = "SalesStatus" | "SalesQuotationStatus" | "ReturnStatusHeader" | "LedgerTransType" | "NoYes" | "PurchStatus"
+  | "VersioningDocumentState" | "ProdStatus" | "InventTransferStatus" | "SalesDocumentStatus";
 
 export interface EntityDef {
   entitySet: string;
@@ -18,7 +19,16 @@ export interface EntityDef {
   filter?: string;
   /** Table has no company column (global entity). */
   global?: boolean;
+  /** Constant columns written on every row; several entities can then share one table (each replaces only its own rows). */
+  fixed?: Record<string, string>;
 }
+
+/** Journal headers of every module, one table (d365.journals) tagged by source. */
+const journal = (entitySet: string, module: string, kind: string, numberField: string, nameField: string, extra: EntityDef["map"] = {}): EntityDef => ({
+  entitySet, table: "d365.journals", mode: "full", fixed: { source: entitySet, module, kind },
+  map: { [numberField]: ["journal", "text"], [nameField]: ["journal_name", "text"], Description: ["description", "text"], IsPosted: ["posted", "int", "NoYes"], ...extra },
+});
+const INVENT_POSTED: EntityDef["map"] = { PostedDateTime: ["posted_at", "ts"], PostedUserId: ["posted_by", "text"] };
 
 export const ENTITIES: EntityDef[] = [
   {
@@ -137,6 +147,43 @@ export const ENTITIES: EntityDef[] = [
       ActualReturnArrivalDate: ["actual_arrival", "date"], ReturnClosedDate: ["closed", "date"],
     },
   },
+  {
+    // Every sales order header (all statuses) for the transaction tracking reports.
+    entitySet: "SalesOrderHeadersV2", table: "d365.sales_orders", mode: "full",
+    map: {
+      SalesOrderNumber: ["sales_order", "text"], OrderCreationDateTime: ["created_at", "ts"], SalesOrderStatus: ["status", "int", "SalesStatus"],
+      SalesOrderProcessingStatus: ["doc_status", "int", "SalesDocumentStatus"], OrderTakerPersonnelNumber: ["taker", "text"],
+      OrderingCustomerAccountNumber: ["customer", "text"], RequestedShippingDate: ["requested_ship", "date"],
+    },
+  },
+  {
+    entitySet: "PurchaseOrderHeadersV2", table: "d365.purch_orders", mode: "full",
+    map: {
+      PurchaseOrderNumber: ["purchase_order", "text"], OrderVendorAccountNumber: ["vendor", "text"], PurchaseOrderStatus: ["status", "int", "PurchStatus"],
+      DocumentApprovalStatus: ["approval", "int", "VersioningDocumentState"], AccountingDate: ["accounting_date", "date"], OrdererPersonnelNumber: ["orderer", "text"],
+    },
+  },
+  {
+    entitySet: "ProductionOrderHeaders", table: "d365.prod_orders", mode: "full",
+    map: {
+      ProductionOrderNumber: ["prod_order", "text"], ItemNumber: ["item", "text"], ProductionOrderStatus: ["status", "int", "ProdStatus"],
+      ScheduledQuantity: ["qty", "num"], DeliveryDate: ["delivery_date", "date"], ProductionWarehouseId: ["warehouse", "text"],
+    },
+  },
+  {
+    entitySet: "TransferOrderHeaders", table: "d365.transfer_orders", mode: "full",
+    map: {
+      TransferOrderNumber: ["transfer_order", "text"], TransferOrderStatus: ["status", "int", "InventTransferStatus"],
+      ShippingWarehouseId: ["from_wh", "text"], ReceivingWarehouseId: ["to_wh", "text"], RequestedShippingDate: ["ship_date", "date"],
+    },
+  },
+  journal("LedgerJournalHeaders", "General ledger", "General journal", "JournalBatchNumber", "JournalName", { JournalTotalDebit: ["amount", "num"] }),
+  journal("CustomerPaymentJournalHeaders", "Accounts receivable", "Customer payment journal", "JournalBatchNumber", "JournalName"),
+  journal("VendorPaymentJournalHeaders", "Accounts payable", "Vendor payment journal", "JournalBatchNumber", "JournalName"),
+  journal("InventoryMovementJournalHeaders", "Inventory", "Movement journal", "JournalNumber", "JournalNameId", INVENT_POSTED),
+  journal("InventoryAdjustmentJournalHeaders", "Inventory", "Adjustment journal", "JournalNumber", "JournalNameId", INVENT_POSTED),
+  journal("InventoryTransferJournalHeaders", "Inventory", "Transfer journal", "JournalNumber", "JournalNameId", INVENT_POSTED),
+  journal("InventoryCountingJournalHeaders", "Inventory", "Counting journal", "JournalNumber", "JournalNameId", INVENT_POSTED),
 ];
 
 /** Convert one OData / snapshot value to a DB value. D365's empty date is 1900-01-01. */
@@ -146,6 +193,10 @@ export function convert(value: unknown, type: ColType, enumName?: EnumName): str
     const s = String(value).slice(0, 10);
     if (!s || s.startsWith("1900-01-01")) return null;
     return s;
+  }
+  if (type === "ts") {
+    const s = String(value);
+    return !s || s.startsWith("1900-01-01") ? null : s;
   }
   if (type === "num") return Number(value) || 0;
   if (type === "int") {
@@ -163,6 +214,13 @@ export const ENUMS: Record<EnumName, Record<string, number>> = {
   SalesStatus: { None: 0, Backorder: 1, Delivered: 2, Invoiced: 3, Canceled: 4 },
   SalesQuotationStatus: { Created: 0, Sent: 1, Confirmed: 2, Lost: 3, Cancelled: 4, Reset: 5, Modified: 6, Submitted: 7, Approved: 8, Revised: 9 },
   ReturnStatusHeader: { None: 0, Created: 1, Open: 2, Closed: 3, Canceled: 4 },
+  NoYes: { No: 0, Yes: 1 },
+  PurchStatus: { None: 0, Backorder: 1, Received: 2, Invoiced: 3, Canceled: 4 },
+  VersioningDocumentState: { Draft: 0, InReview: 10, Rejected: 20, Approved: 30, InExternalReview: 35, Confirmed: 40, Finalized: 50 },
+  ProdStatus: { None: 0, CostEstimated: 1, Scheduled: 2, Released: 3, StartedUp: 4, ReportedFinished: 5, Completed: 7 },
+  InventTransferStatus: { Created: 0, Shipped: 1, Received: 2 },
+  // Sales order "processing status" (document status of the last posted update).
+  SalesDocumentStatus: { Active: 0, Confirmed: 1, Picked: 2, PartiallyDelivered: 3, Delivered: 4, PartiallyPicked: 5, PartiallyInvoiced: 6, Invoiced: 7 },
   LedgerTransType: {
     None: 0, Transfer: 1, Sales: 2, Purch: 3, Invent: 4, Production: 5, Project: 6, Interest: 7, Cust: 8, ExchAdjustment: 9,
     CollectionLetter: 13, Vend: 14, Payment: 15, Tax: 16, Bank: 17, BillOfExchange: 19, PromissoryNote: 20, Fee: 23,
