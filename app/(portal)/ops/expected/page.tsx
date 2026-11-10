@@ -13,7 +13,8 @@ export default async function Page({ searchParams }: { searchParams: Record<stri
   if (!s) return <Empty>Your account has no company access yet.</Empty>;
   if (s.user.role === "sales") return <Empty>Entry monitoring is open to administrators and managers.</Empty>;
   if (!one(searchParams.from)) { s.to = today(); s.from = addDays(s.to, -90); }
-  const [exp, entered] = await Promise.all([expectedEntries(s.company, s.from, s.to), enteredCounts(s.company, s.from, s.to)]);
+  const exp = await expectedEntries(s.company, s.from, s.to);
+  const entered = await enteredCounts(s.company, s.from, s.to);
   const label = Object.fromEntries(EXPECTED_TYPES.map((t) => [t.key, t.label]));
   const rows = exp.map((e) => {
     const n = entered.get(`${e.day}|${e.doc_type}`) ?? 0;
