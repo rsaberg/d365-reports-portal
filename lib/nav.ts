@@ -36,14 +36,15 @@ export const OPS = [
   { href: "/ops/users", title: "User activity" },
   { href: "/ops/expected", title: "Expected vs entered" },
 ];
-export const MODULE_NAV = [
-  { href: "/m/executive", title: "Executive overview" },
-  { href: "/m/receivables", title: "Receivables" },
-  { href: "/m/purchasing", title: "Purchasing" },
-  { href: "/m/payables", title: "Payables" },
-  { href: "/m/inventory", title: "Inventory" },
-  { href: "/m/warehouse", title: "Warehouse" },
-  { href: "/m/production", title: "Production" },
-  { href: "/m/cash", title: "Cash & bank" },
-  { href: "/m/assets", title: "Fixed assets" },
+/** Module menus: each module and the reports under it (keys match lib/reports/modules.ts). */
+export const MODULE_NAV: { href: string; title: string; items: [string, string][] }[] = [
+  { href: "/m/executive", title: "Executive overview", items: [["overview", "Overview"]] },
+  { href: "/m/receivables", title: "Receivables", items: [["overview", "Overview"], ["balances", "Customer balances"], ["overdue", "Overdue invoices"], ["credit", "Credit limit use"], ["payments", "Customer payments"]] },
+  { href: "/m/purchasing", title: "Purchasing", items: [["overview", "Overview"], ["open", "Open purchase orders"], ["register", "Purchase register"], ["price", "Purchase price history"], ["delivery", "Vendor delivery performance"], ["receipts", "Pending receipts"]] },
+  { href: "/m/payables", title: "Payables", items: [["aging", "Vendor aging"], ["statement", "Vendor statement"], ["due", "Payments due"], ["payments", "Vendor payments"]] },
+  { href: "/m/inventory", title: "Inventory", items: [["overview", "Overview"], ["onhand", "On-hand by site & warehouse"], ["valuation", "Inventory valuation"], ["movement", "Item movement"], ["slow", "Slow-moving & dead stock"], ["reorder", "Below reorder point"], ["turnover", "Inventory turnover"], ["batch", "Batch & expiry"]] },
+  { href: "/m/warehouse", title: "Warehouse", items: [["shipments", "Open shipments & picking"], ["receipts", "Receipts register"], ["transit", "Transfers in transit"]] },
+  { href: "/m/production", title: "Production", items: [["overview", "Overview"], ["status", "Production order status"], ["output", "Output vs plan"], ["material", "Material consumption vs BOM"], ["late", "Late production orders"]] },
+  { href: "/m/cash", title: "Cash & bank", items: [["balances", "Bank balances"], ["transactions", "Bank transactions"], ["forecast", "Cash forecast"]] },
+  { href: "/m/assets", title: "Fixed assets", items: [["register", "Fixed asset register"], ["depreciation", "Depreciation schedule"], ["movements", "Acquisitions & disposals"]] },
 ];
