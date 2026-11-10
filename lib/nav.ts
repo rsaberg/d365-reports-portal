@@ -40,7 +40,7 @@ type Item = { href: string; label: string };
 const mod = (key: string, items: [string, string][]): Item[] => [{ href: `/m/${key}`, label: "Dashboard" }, ...items.map(([r, label]) => ({ href: `/m/${key}?r=${r}`, label }))];
 /** The whole sidebar is modules: each one opens on its dashboard and lists its reports under it.
  *  `managers` modules are hidden from the sales role. */
-export const NAV_MODULES: { key: string; title: string; managers?: boolean; items: Item[] }[] = [
+export const NAV_MODULES: { key: string; title: string; managers?: boolean; admins?: boolean; items: Item[] }[] = [
   { key: "executive", title: "Executive", managers: true, items: [{ href: "/m/executive", label: "Dashboard" }] },
   { key: "sales", title: "Sales", items: [{ href: "/", label: "Dashboard" }, ...SALES_REPORTS.map((r) => ({ href: r.href, label: r.title }))] },
   { key: "receivables", title: "Receivables", managers: true, items: mod("receivables", [["balances", "Customer balances"], ["overdue", "Overdue invoices"], ["credit", "Credit limit use"], ["payments", "Customer payments"]]) },
@@ -49,8 +49,10 @@ export const NAV_MODULES: { key: string; title: string; managers?: boolean; item
   { key: "inventory", title: "Inventory", managers: true, items: mod("inventory", [["onhand", "On-hand by site & warehouse"], ["valuation", "Inventory valuation"], ["movement", "Item movement"], ["slow", "Slow-moving & dead stock"], ["reorder", "Below reorder point"], ["turnover", "Inventory turnover"], ["batch", "Batch & expiry"]]) },
   { key: "warehouse", title: "Warehouse", managers: true, items: mod("warehouse", [["shipments", "Open shipments & picking"], ["receipts", "Receipts register"], ["transit", "Transfers in transit"]]) },
   { key: "production", title: "Production", managers: true, items: mod("production", [["status", "Production order status"], ["output", "Output vs plan"], ["material", "Material consumption vs BOM"], ["late", "Late production orders"]]) },
+  { key: "cost", title: "Cost accounting", managers: true, items: mod("cost", [["items", "Item cost list"], ["cogs", "Cost of sales by item"], ["ppv", "Purchase price variance"], ["production", "Production order costing"], ["groups", "Cost by item group"]]) },
   { key: "cash", title: "Cash & bank", managers: true, items: mod("cash", [["balances", "Bank balances"], ["transactions", "Bank transactions"], ["forecast", "Cash forecast"]]) },
   { key: "assets", title: "Fixed assets", managers: true, items: mod("assets", [["register", "Fixed asset register"], ["depreciation", "Depreciation schedule"], ["movements", "Acquisitions & disposals"]]) },
   { key: "finance", title: "Finance", managers: true, items: FINANCE.map((r, i) => ({ href: r.href, label: i === 0 ? "Dashboard" : r.title })) },
+  { key: "security", title: "User security", managers: true, admins: true, items: mod("security", [["users", "Users & roles"], ["roles", "Roles & members"], ["privileged", "Privileged access"], ["sod", "Segregation of duties"], ["licenses", "Licences"]]) },
   { key: "transactions", title: "Transactions", managers: true, items: [{ href: "/m/transactions", label: "Dashboard" }, ...OPS.map((r) => ({ href: r.href, label: r.title }))] },
 ];
