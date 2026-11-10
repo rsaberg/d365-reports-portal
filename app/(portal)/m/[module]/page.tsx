@@ -8,11 +8,14 @@ import DataTable from "@/components/DataTable";
 import { DASHBOARDS } from "@/lib/reports/dashboards";
 import { DashView } from "@/components/dash";
 import { EXTRA_DASHBOARDS, EXTRA_MODULES } from "@/lib/reports/costsec";
+import { STOCK_REPORTS, type OptionSpec } from "@/lib/reports/stock";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page({ params, searchParams }: { params: { module: string }; searchParams: Record<string, string> }) {
-  const mod = moduleByKey(params.module) ?? EXTRA_MODULES.find((m) => m.key === params.module);
+  const base = moduleByKey(params.module) ?? EXTRA_MODULES.find((m) => m.key === params.module);
+  // Inventory gets the D365 movement and aging reports (lib/reports/stock.ts) in front of its other reports.
+  const mod = base?.key === "inventory" ? { ...base, reports: [...STOCK_REPORTS, ...base.reports] } : base;
   const dash = DASHBOARDS[params.module] ?? EXTRA_DASHBOARDS[params.module];
   if (!mod && !dash) notFound();
   const s = await reportScope(searchParams);
@@ -39,13 +42,20 @@ export default async function Page({ params, searchParams }: { params: { module:
   if (!mod) notFound();
   const rep = mod.reports.find((x) => x.key === r) ?? mod.reports[0];
   if (rep.demo) await ensureDemo(s.company);
-  const spec = await rep.run(ctx);
+  const spec = (await rep.run(ctx)) as Awaited<ReturnType<typeof rep.run>> & { options?: OptionSpec[] };
 
   return (
     <>
       <PageHead title={mod.reports.length > 1 ? `${mod.title} · ${rep.label}` : mod.title} sub={<>{s.company.toUpperCase()} · {mod.sub} · {ctx.cur} · balances as of {asOf}</>} />
       <Filters s={s} show={{ currency: false, group: false }} />
       {rep.demo && <Note>Demo data: this report runs on a small sample built from the company&apos;s real items, customers and vendors. It switches to D365 data once the custom entity for it is synced.</Note>}
+      {spec.options && spec.options.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 mb-3 text-[12px]">
+          {spec.options.map((o) => (
+            <a key={o.label + o.href} href={o.href} className={`${o.sep ? "ms-3 " : ""}px-2.5 py-1 rounded-full border ${o.active ? "bg-sunken text-ink border-ink font-medium" : "border-line text-muted hover:text-ink"}`}>{o.label}</a>
+          ))}
+        </div>
+      )}
       {spec.kpis && spec.kpis.length > 0 && (
         <KpiRow>{spec.kpis.map((k) => <Kpi key={k.label} label={k.label} value={k.value} note={k.note} tone={k.tone ?? null} />)}</KpiRow>
       )}
