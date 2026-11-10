@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { reportScope, one, today } from "@/lib/page";
 import { moduleByKey, type Ctx } from "@/lib/reports/modules";
 import { ensureDemo } from "@/lib/reports/demo";
-import { Filters, Kpi, KpiRow, PageHead, Panel, Empty, Tabs, Note } from "@/components/ui";
+import { Filters, Kpi, KpiRow, PageHead, Panel, Empty, Note } from "@/components/ui";
 import { BucketBars, PairBars, RankBars } from "@/components/charts";
 import DataTable from "@/components/DataTable";
 
@@ -20,13 +20,11 @@ export default async function Page({ params, searchParams }: { params: { module:
   const asOf = s.to < t ? s.to : t;
   const ctx: Ctx = { s, company: s.company, from: s.from, to: s.to, asOf, cur: s.mst || s.currency, q: searchParams };
   const spec = await rep.run(ctx);
-  const base = { company: s.company, from: s.from, to: s.to, ...(s.currency ? { currency: s.currency } : {}) };
 
   return (
     <>
       <PageHead title={mod.reports.length > 1 ? `${mod.title} · ${rep.label}` : mod.title} sub={<>{s.company.toUpperCase()} · {mod.sub} · {ctx.cur} · balances as of {asOf}</>} />
       <Filters s={s} show={{ currency: false, group: false }} />
-      {mod.reports.length > 1 && <Tabs active={rep.key} items={mod.reports.map((r) => ({ key: r.key, label: r.label, href: `?${new URLSearchParams({ ...base, r: r.key })}` }))} />}
       {rep.demo && <Note>Demo data: this report runs on a small sample built from the company&apos;s real items, customers and vendors. It switches to D365 data once the custom entity for it is synced.</Note>}
       {spec.kpis && spec.kpis.length > 0 && (
         <KpiRow>{spec.kpis.map((k) => <Kpi key={k.label} label={k.label} value={k.value} note={k.note} tone={k.tone ?? null} />)}</KpiRow>
