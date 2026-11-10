@@ -5,6 +5,7 @@ export const SALES_REPORTS = [
   { href: "/sales/aging", title: "Customer Aging", desc: "Open receivables by days past due" },
   { href: "/sales/statement", title: "Statement & Collections", desc: "Opening, invoiced, collected, closing per customer" },
   { href: "/sales/payments", title: "Invoice Payment Status", desc: "Paid, unpaid, remaining amount and days per invoice" },
+  { href: "/m/margin", title: "Sales Margin", desc: "Sales, cost and gross profit per item and customer" },
   { href: "/sales/salesperson", title: "Sales by Salesperson", desc: "Actual vs target per salesperson" },
   { href: "/sales/discounts", title: "Discount Analysis", desc: "Discounts by customer, item and price variance" },
   { href: "/sales/returns", title: "Returns", desc: "Return orders, reasons and dispositions" },
@@ -34,4 +35,15 @@ export const OPS = [
   { href: "/ops/documents", title: "Document lifecycle" },
   { href: "/ops/users", title: "User activity" },
   { href: "/ops/expected", title: "Expected vs entered" },
+];
+export const MODULE_NAV = [
+  { href: "/m/executive", title: "Executive overview" },
+  { href: "/m/receivables", title: "Receivables" },
+  { href: "/m/purchasing", title: "Purchasing" },
+  { href: "/m/payables", title: "Payables" },
+  { href: "/m/inventory", title: "Inventory" },
+  { href: "/m/warehouse", title: "Warehouse" },
+  { href: "/m/production", title: "Production" },
+  { href: "/m/cash", title: "Cash & bank" },
+  { href: "/m/assets", title: "Fixed assets" },
 ];
