@@ -9,7 +9,8 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed-admin": "tsx scripts/seed-admin.ts",
     "load:snapshot": "tsx scripts/load-snapshot.ts",
-    "sync": "tsx scripts/sync.ts"
+    "sync": "tsx scripts/sync.ts",
+    "test:si": "node --import tsx --test tests/si.test.ts && node -r ./tests/server-only-stub.cjs --import tsx --test tests/si.db.test.ts"
   },
   "dependencies": {
     "bcryptjs": "2.4.3",
