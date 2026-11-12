@@ -42,6 +42,14 @@ const mod = (key: string, items: [string, string][]): Item[] => [{ href: `/m/${k
 /** The whole sidebar is modules: each one opens on its dashboard and lists its reports under it.
  *  `managers` modules are hidden from the sales role. */
 export const NAV_MODULES: { key: string; title: string; managers?: boolean; admins?: boolean; items: Item[] }[] = [
+  { key: "si", title: "Sales Intelligence", items: [
+    { href: "/si", label: "Command center" }, { href: "/si/daily", label: "Daily" }, { href: "/si/weekly", label: "Weekly" }, { href: "/si/monthly", label: "Monthly" },
+    { href: "/si/quarterly", label: "Quarterly" }, { href: "/si/yearly", label: "Yearly" }, { href: "/si/pvm", label: "Growth bridge" }, { href: "/si/targets", label: "Actual vs target" },
+    { href: "/si/orders", label: "Orders & backlog" }, { href: "/si/fulfilment", label: "Delivery & unbilled" }, { href: "/si/invoices", label: "Invoices & credits" },
+    { href: "/si/customers", label: "Customers" }, { href: "/si/products", label: "Products" }, { href: "/si/pricing", label: "Pricing & discounts" }, { href: "/si/margin", label: "Margin" },
+    { href: "/si/team", label: "Team & territory" }, { href: "/si/returns", label: "Returns & credits" }, { href: "/si/ar", label: "Receivables & credit" },
+    { href: "/si/recon", label: "Reconciliation" }, { href: "/si/kpis", label: "Metric dictionary" }, { href: "/si/reports", label: "Report library" }, { href: "/si/health", label: "Connection health" },
+  ] },
   { key: "executive", title: "Executive", managers: true, items: [{ href: "/m/executive", label: "Dashboard" }] },
   { key: "sales", title: "Sales", items: [{ href: "/", label: "Dashboard" }, ...SALES_REPORTS.map((r) => ({ href: r.href, label: r.title }))] },
   { key: "receivables", title: "Receivables", managers: true, items: mod("receivables", [["balances", "Customer balances"], ["overdue", "Overdue invoices"], ["credit", "Credit limit use"], ["payments", "Customer payments"]]) },
