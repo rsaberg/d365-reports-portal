@@ -2,7 +2,8 @@
 import { useEffect } from "react";
 import AR1 from "@/lib/i18n/ar.json";
 import AR2 from "@/lib/i18n/ar2.json";
-const AR: Record<string, string> = { ...AR1, ...AR2 };
+import ARSI from "@/lib/i18n/ar-si.json";
+const AR: Record<string, string> = { ...AR1, ...AR2, ...ARSI };
 
 /* Arabic mode: translates the rendered page (text, placeholders, titles) from the English UI using the dictionary
    in lib/i18n/ar.json plus a few patterns for text with numbers. Charts and tables re-render, so a MutationObserver

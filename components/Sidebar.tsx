@@ -31,7 +31,7 @@ export default function Sidebar({ isAdmin, finance, appName }: { isAdmin: boolea
     const [p, query] = href.split("?");
     const r = new URLSearchParams(query ?? "").get("r");
     if (p.startsWith("/m/")) return path === p && (r ? sp.get("r") === r : !sp.get("r") || sp.get("r") === "dashboard");
-    if (p === "/" || p === "/finance" || p === "/ops") return path === p;
+    if (p === "/" || p === "/finance" || p === "/ops" || p === "/si") return path === p;
     return path.startsWith(p);
   };
   const hrefFor = (href: string) => {
